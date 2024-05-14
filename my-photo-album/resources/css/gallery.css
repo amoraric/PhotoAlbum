@@ -1,0 +1,140 @@
+body {
+    margin: 0;
+}
+
+.tooltip {
+    font-weight: bold;
+    text-align: center;
+    color: #FFF;
+    background: rgba(0, 0, 0, .6);
+    width: 120px;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+    border-radius: 24px;
+    position: fixed;
+    bottom: 72px;
+    left: calc((100vw - 120px) / 2);
+}
+
+nav > ul {
+    list-style: none;
+    background: rgba(0, 0, 0, .6);
+    width: 270px;
+    height: 52px;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+    border-radius: 14px;
+    position: fixed;
+    bottom: 20px;
+    left: calc((100vw - 270px) / 2);
+    margin: 0;
+    padding: 0 12px;
+}
+
+nav > ul > li[data-navigation="photo"] {
+    display: none;
+}
+
+nav > ul svg {
+    transform: translateY(2px) scale(1.5);
+}
+
+nav a {
+    color: #ABABAB;
+    transition: .4s color;
+}
+
+nav a:hover {
+    color: #FFF;
+}
+
+#gallery {
+    width: 100vw;
+    height: 100vh;
+    display: none;
+    justify-content: center;
+    overflow: hidden;
+}
+
+#currentImage {
+    height: 100%;
+}
+
+#list {
+    display: flex;
+    flex-flow: column wrap;
+    align-items: center;
+}
+
+.imageWrapper {
+    text-align: center;
+    width: calc(100vw * .85);
+    height: calc((100vw * .85) / 1.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+    border: 2px solid transparent;
+    border-radius: 24px;
+    overflow: hidden;
+    margin: 12px 0 15px 0;
+}
+
+.thumbnail {
+    width: 100%;
+}
+
+@media screen and (min-width: 1024px) {
+    .tooltip {
+        bottom: unset;
+        left: unset;
+        top: 62px;
+        right: calc((270px / 2) - (120px / 2));
+    }
+
+    nav > ul {
+        bottom: unset;
+        left: unset;
+        top: 12px;
+        right: 12px;
+    }
+
+    nav > ul > li[data-navigation="group"] {
+        display: none;
+    }
+
+    nav > ul > li[data-navigation="photo"] {
+        display: block;
+    }
+
+    #gallery {
+        display: flex;
+    }
+
+    #list {
+        flex-flow: row nowrap;
+        justify-content: flex-start;
+        align-items: center;
+        position: fixed;
+        left: 7.5%;
+        right: 7.5%;
+        bottom: 12px;
+        overflow-x: auto;
+    }
+
+    .imageWrapper {
+        width: 220px;
+        height: 130px;
+        flex: 0 0 220px;
+    }
+
+    .imageWrapper:not(:last-child) {
+        margin-right: 12px;
+    }
+}
