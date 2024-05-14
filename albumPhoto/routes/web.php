@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AlbumController;
 use App\Http\Controllers\PhotoController;
+use App\Http\Controllers\HomeController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -10,9 +11,12 @@ Route::get('/', function () {
 
 Auth::routes();
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::get('/home', [HomeController::class, 'index']);
 
-Route::get('/gallery', [AlbumController::class, 'index'])->name('gallery');
+Route::get('/gallery', [AlbumController::class, 'index']);
 
-Route::post('/albums', [AlbumController::class, 'store'])->name('albums.store');
-Route::post('/photos', [PhotoController::class, 'store'])->name('photos.store');
+Route::post('/albums', [AlbumController::class, 'store']);
+Route::post('/photos', [PhotoController::class, 'store']);
+
+Route::post('/photos/add', [PhotoController::class, 'store']);
+Route::post('/albums/add', [AlbumController::class, 'store']);

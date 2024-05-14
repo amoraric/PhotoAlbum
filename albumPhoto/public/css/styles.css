@@ -1,4 +1,4 @@
-body {
+/* body {
     background-color: #f8fafc;
     color: #636b6f;
     font-family: 'Nunito', sans-serif;
@@ -31,4 +31,10 @@ h2 {
 .gallery img {
     max-width: 100px;
     border-radius: 5px;
-}
+} */
+
+/* public/css/style.css */
+body { font-family: Arial, sans-serif; }
+.gallery, .albums { width: 49%; height: 90vh; overflow-y: scroll; float: left; padding: 10px; box-sizing: border-box; }
+.button { padding: 5px 10px; margin: 10px 0; cursor: pointer; }
+.popup { position: fixed; background: white; border: 1px solid #ccc; padding: 20px; top: 20%; left: 50%; transform: translate(-50%, -50%); display: none; }
