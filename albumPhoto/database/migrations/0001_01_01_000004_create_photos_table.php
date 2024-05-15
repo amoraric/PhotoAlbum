@@ -10,9 +10,10 @@ class CreatePhotosTable extends Migration
     {
         Schema::create('photos', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('path');
+            $table->string('filename');
             $table->unsignedBigInteger('album_id');
+            $table->string('photo_name');
+            $table->string('path')->nullable();
             $table->timestamps();
 
             $table->foreign('album_id')->references('id')->on('albums')->onDelete('cascade');

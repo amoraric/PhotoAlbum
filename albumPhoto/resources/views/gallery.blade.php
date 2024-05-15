@@ -1,9 +1,9 @@
-@extends('layouts.canvas')
+@extends('layouts.app')
 
 @section('content')
 <div class="container">
     <h2>Create Album</h2>
-    <form action="{{ route('albums.store') }}" method="POST">
+    <form action="{{ route('albums.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
         <div class="form-group">
             <label for="albumName">Album Name</label>
@@ -39,13 +39,38 @@
     <hr>
 
     <h2>Gallery</h2>
-    <div class="gallery">
+    <div class="row">
         @foreach($albums as $album)
-            <h3>{{ $album->name }}</h3>
-            @foreach($album->photos as $photo)
-                <img src="{{ asset('storage/' . $photo->path) }}" alt="{{ $photo->name }}">
-            @endforeach
+            <div class="col-md-6">
+                <h3>{{ $album->name }}</h3>
+                <div class="row">
+                    @foreach($album->photos as $photo)
+                        <div class="col-md-4 position-relative">
+                            <img src="{{ asset('storage/' . $photo->filename) }}" alt="{{ $photo->photo_name }}" class="img-thumbnail" data-bs-toggle="modal" data-bs-target="#imageModal" @click="showImage('{{ asset('storage/' . $photo->filename) }}')">
+                            <button class="btn btn-secondary position-absolute bottom-0 start-0 m-1" type="button" data-bs-toggle="modal" data-bs-target="#shareModal" @click="setPhotoId({{ $photo->id }})">...</button>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
         @endforeach
     </div>
 </div>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">Image Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <img id="modalImage" src="" alt="Image" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<share-modal></share-modal>
 @endsection

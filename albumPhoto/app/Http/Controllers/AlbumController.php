@@ -7,11 +7,11 @@
 
 // class AlbumController extends Controller
 // {
-//     public function index()
-//     {
-//         $albums = Album::with('photos')->get();
-//         return view('gallery', compact('albums'));
-//     }
+    // public function index()
+    // {
+    //     $albums = Album::with('photos')->get();
+    //     return view('gallery', compact('albums'));
+    // }
 
 //     public function store(Request $request)
 //     {
@@ -35,20 +35,32 @@ use App\Models\Album;
 
 class AlbumController extends Controller
 {
+    public function index()
+    {
+        $albums = Album::with('photos')->get();
+        return view('gallery', compact('albums'));
+    }
+
     public function store(Request $request)
     {
         $request->validate([
-            'cover_image' => 'required|image',
-            'title' => 'required|string'
+            'album_name' => 'required|string|max:255',
         ]);
 
-        $path = $request->file('cover_image')->store('albums', 'public');
+        Album::create([
+            'name' => $request->album_name,
+            'user_id' => auth()->id(),
+        ]);
 
-        $album = new Album;
-        $album->cover_image = $path;
-        $album->title = $request->input('title');
-        $album->save();
+        return redirect()->route('gallery')->with('success', 'Album created successfully!');
+    }
 
-        return response()->json(['success' => true, 'path' => $path]);
+    public function sharedAlbums()
+    {
+        $sharedAlbums = Album::where('is_shared', true)->with('photos')->get();
+        return view('shared_albums', compact('sharedAlbums'));
     }
 }
+
+
+

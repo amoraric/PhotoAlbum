@@ -5,7 +5,16 @@
  */
 
 import './bootstrap';
+import 'bootstrap';
 import { createApp } from 'vue';
+import ExampleComponent from './components/ExampleComponent.vue';
+import ShareModal from './components/ShareModal.vue';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import * as bootstrap from 'bootstrap';
+import $ from 'jquery';
+import 'lightbox2/dist/css/lightbox.min.css';
+import 'lightbox2/dist/js/lightbox.min.js';
 
 /**
  * Next, we will create a fresh Vue application instance. You may then begin
@@ -13,10 +22,24 @@ import { createApp } from 'vue';
  * to use in your application's views. An example is included for you.
  */
 
-const app = createApp({});
-
-import ExampleComponent from './components/ExampleComponent.vue';
-app.component('example-component', ExampleComponent);
+const app = createApp({
+    data() {
+      return {
+        photoId: null,
+      };
+    },
+    methods: {
+      showImage(src) {
+        document.getElementById('modalImage').src = src;
+      },
+      setPhotoId(photoId) {
+        this.photoId = photoId;
+      }
+    }
+  });
+  
+  app.component('example-component', ExampleComponent);
+  app.component('share-modal', ShareModal);
 
 /**
  * The following block of code may be used to automatically register your
@@ -37,3 +60,5 @@ app.component('example-component', ExampleComponent);
  */
 
 app.mount('#app');
+
+window.bootstrap = bootstrap;

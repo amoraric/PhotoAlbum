@@ -1,0 +1,42 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="container">
+    <h2>Shared Albums</h2>
+    <div class="row">
+        @foreach($sharedAlbums as $album)
+            <div class="col-md-6">
+                <h3>{{ $album->title }}</h3>
+                <div class="row">
+                    @foreach($album->photos as $photo)
+                        <div class="col-md-4">
+                            <img src="{{ asset('storage/' . $photo->path) }}" alt="{{ $photo->name }}" class="img-thumbnail" data-bs-toggle="modal" data-bs-target="#imageModal" onclick="showImage('{{ asset('storage/' . $photo->path) }}')">
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endforeach
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">Image Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <img id="modalImage" src="" alt="Image" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showImage(src) {
+    document.getElementById('modalImage').src = src;
+}
+</script>
+@endsection
