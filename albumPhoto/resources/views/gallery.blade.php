@@ -45,25 +45,19 @@
             <h3>{{ $album->name }}</h3>
             <div class="row mb-2">
                 <div class="col-12 text-end">
-                    <a href="{{ route('sharealbum', ['id' => $album->id]) }}" class="btn btn-primary mb-2">Share Album</a>
-
-                    <!-- Form to send album via email -->
-
-                    <button class="btn btn-secondary position-absolute bottom-0 start-0 m-1" type="button" data-bs-toggle="modal" data-bs-target="#shareModalAlbum">share Album</button>
-
+                    <button class="btn btn-secondary" type="button" data-bs-toggle="modal" data-bs-target="#shareModalAlbum" @click="setAlbumId({{ $album->id }})">Share Album</button>
                 </div>
             </div>
             <div class="row">
                 @foreach($album->photos as $photo)
                 <div class="col-md-4 position-relative">
                     <img src="{{ asset('storage/' . $photo->filename) }}" alt="{{ $photo->photo_name }}" class="img-thumbnail" data-bs-toggle="modal" data-bs-target="#imageModal" @click="showImage('{{ asset('storage/' . $photo->filename) }}')">
-                    <button class="btn btn-secondary position-absolute bottom-0 start-0 m-1" type="button" data-bs-toggle="modal" data-bs-target="#shareModalPhotos" @click="setPhotoId({{ $photo->id }})">share Photo</button>
+                    <button class="btn btn-secondary position-absolute bottom-0 start-0 m-1" type="button" data-bs-toggle="modal" data-bs-target="#shareModalPhotos" @click="setPhotoId({{ $photo->id }})">Share Photo</button>
                 </div>
                 @endforeach
             </div>
         </div>
         @endforeach
-
     </div>
 </div>
 
@@ -82,6 +76,7 @@
     </div>
 </div>
 
-<!-- Share Modal -->
-<share-modal></share-modal>
+<!-- Share Modals -->
+<share-modal-photos></share-modal-photos>
+<share-modal-album></share-modal-album> <!-- Ajout du modal de partage d'album -->
 @endsection

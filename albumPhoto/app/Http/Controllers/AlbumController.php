@@ -33,6 +33,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Album;
 use Illuminate\Support\Facade\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Photo;
+use App\Models\User;
+use App\Models\AlbumShared;
 
 class AlbumController extends Controller
 {
@@ -63,33 +67,19 @@ class AlbumController extends Controller
         $sharedAlbums = Album::where('is_shared', true)->with('photos')->get();
         return view('shared_albums', compact('sharedAlbums'));
     }
-    */
-    /*
-    public function share(Request $request, Album $albums)
-    {
-        $request->validate([
-            'shareWith' => 'required|email'
-        ]);
-
-        $user = User::where('email', $request->shareWith)->first();
-        if ($user) {
-            $albums->sharedUsers()->attach($user->id);
-            return redirect()->route('gallery')->with('success', 'Photo shared successfully!');
-        } else {
-            return redirect()->route('gallery')->with('error', 'User not found.');
-        }
-    }
-
+    
+*/
     public function sharedAlbums(){
         $userId = Auth::id();
-        $sharedAlbums = Album::join('album_user', 'albums.id', '=', 'album_user.album_id')
-        ->where('album_user.user_id', '=', $userId) // Filtrer les albums partagés avec l'utilisateur connecté
+        $sharedAlbums = Album::join('album_shared', 'albums.id', '=', 'album_shared.album_id')
+        ->where('album_shared.shared_user_id', '=', $userId) // Filtrer les albums partagés avec l'utilisateur connecté
         ->select('albums.*')
         ->get();
         return view('shared_albums', compact('sharedAlbums'));
 
     }
-*/
+
+
     public function createDefaultAlbum()
     {
         $userId = auth()->id();
@@ -101,17 +91,24 @@ class AlbumController extends Controller
     }
 
 
+
     public function share(Request $request, Album $album)
     {
-        $this->authorize('update', $album);
+        $request->validate([
+            'shareWith' => 'required|email'
+        ]);
 
-        $user = User::where('email', $request->input('shareWith'))->first();
-        if ($user && !$album->users->contains($user->id)) {
-            $album->users()->attach($user->id);
+        $owner = Auth::id();
+        $user = User::where('email', $request->shareWith)->first();
+        if ($user) {
+            AlbumShared::addAlbumShared($owner,$album->id,$user->id);
+            return redirect()->route('gallery')->with('success', 'Photo shared successfully!');
+        } else {
+            return redirect()->route('gallery')->with('error', 'User not found.');
         }
-
-        return redirect()->back()->with('status', 'Album shared successfully!');
     }
+
+
 
     public function unshare(Request $request, Album $album)
     {

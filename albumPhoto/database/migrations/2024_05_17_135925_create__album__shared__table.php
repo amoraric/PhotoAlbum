@@ -14,8 +14,9 @@ return new class extends Migration
 
         Schema::create('album_shared', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('album_id')->constrained()->onDelete('cascade');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('owner_id')->references('id')->on('users')->cascadeOnDelete();
+            $table->foreignId('album_id')->references('id')->on('albums')->cascadeOnDelete();
+            $table->foreignId('shared_user_id')->references('id')->on('users')->cascadeOnDelete();
             $table->timestamps();
         });
     }
@@ -24,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('album_user');
+        Schema::dropIfExists('album_shared');
     }
 };
