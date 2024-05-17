@@ -48,8 +48,8 @@
                     <a href="{{ route('sharealbum', ['id' => $album->id]) }}" class="btn btn-primary mb-2">Share Album</a>
 
                     <!-- Form to send album via email -->
-                    
-                    <button class="btn btn-secondary position-absolute bottom-0 start-0 m-1" type="button" data-bs-toggle="modal" data-bs-target="#shareModalAlbum" @click="setAlbumId({{ $album->id }})">share Album</button>
+
+                    <button class="btn btn-secondary position-absolute bottom-0 start-0 m-1" type="button" data-bs-toggle="modal" data-bs-target="#shareModalAlbum">share Album</button>
 
                 </div>
             </div>
@@ -57,7 +57,7 @@
                 @foreach($album->photos as $photo)
                 <div class="col-md-4 position-relative">
                     <img src="{{ asset('storage/' . $photo->filename) }}" alt="{{ $photo->photo_name }}" class="img-thumbnail" data-bs-toggle="modal" data-bs-target="#imageModal" @click="showImage('{{ asset('storage/' . $photo->filename) }}')">
-                    <button class="btn btn-secondary position-absolute bottom-0 start-0 m-1" type="button" data-bs-toggle="modal" data-bs-target="#shareModal" @click="setPhotoId({{ $photo->id }})">share Photo</button>
+                    <button class="btn btn-secondary position-absolute bottom-0 start-0 m-1" type="button" data-bs-toggle="modal" data-bs-target="#shareModalPhotos" @click="setPhotoId({{ $photo->id }})">share Photo</button>
                 </div>
                 @endforeach
             </div>

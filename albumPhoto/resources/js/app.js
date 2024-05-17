@@ -8,7 +8,8 @@ import './bootstrap';
 import 'bootstrap';
 import { createApp } from 'vue';
 import ExampleComponent from './components/ExampleComponent.vue';
-import ShareModal from './components/ShareModal.vue';
+import ShareModalPhotos from './components/ShareModalPhotos.vue';
+import ShareModalAlbums from './components/ShareModalAlbums.vue';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import * as bootstrap from 'bootstrap';
@@ -37,9 +38,10 @@ const app = createApp({
       }
     }
   });
-  
-  app.component('example-component', ExampleComponent);
-  app.component('share-modal', ShareModal);
+
+app.component('example-component', ExampleComponent);
+app.component('share-modal-photos', ShareModalPhotos); // Register the component with its alias
+app.component('share-modal-albums', ShareModalAlbums);
 
 /**
  * The following block of code may be used to automatically register your

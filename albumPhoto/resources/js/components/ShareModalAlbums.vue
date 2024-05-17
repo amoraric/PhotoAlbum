@@ -1,5 +1,5 @@
 <template>
-  <div class="modal fade" id="shareModalAlbum" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+  <div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -33,9 +33,14 @@
     </div>
   </div>
 </template>
-
 <script>
 export default {
+  props: {
+    albumId: {
+      type: Number,
+      required: true,
+    },
+  },
   data() {
     return {
       showForm: false,
@@ -53,19 +58,19 @@ export default {
       this.showList = false;
       this.shareAction = true;
       this.buttonText = 'Share';
-      this.formAction = `/albums/${this.$root.albumId}/share`;
+      this.formAction = `/albums/${this.albumId}/share`;
     },
     showUnshareForm() {
       this.showForm = true;
       this.showList = false;
       this.shareAction = false;
       this.buttonText = 'Unshare';
-      this.formAction = `/albums/${this.$root.albumId}/unshare`;
+      this.formAction = `/albums/${this.albumId}/unshare`;
     },
     showShareList() {
       this.showForm = false;
       this.showList = true;
-      fetch(`/albums/${this.$root.albumId}/share-list`)
+      fetch(`/albums/${this.albumId}/share-list`)
         .then(response => response.json())
         .then(data => {
           this.shareList = data;

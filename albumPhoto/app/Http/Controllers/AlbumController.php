@@ -89,23 +89,17 @@ class AlbumController extends Controller
         return view('shared_albums', compact('sharedAlbums'));
 
     }
-
+*/
     public function createDefaultAlbum()
     {
         $userId = auth()->id();
 
-        /*
-        DB::statement('INSERT INTO albums (name, user_id, created_at, updated_at) VALUES (?, ?, ?, ?)', [
-            'ggggg',
-            $userId,
-            now(),
-            now(),
-        ]);
+
 
         Album::insertALbum('gallery', $userId);
         return redirect()->route('home')->with('success', 'Default album created successfully!');
     }
-*/
+
 
     public function share(Request $request, Album $album)
     {
@@ -139,7 +133,7 @@ class AlbumController extends Controller
         return response()->json($shareList);
     }
 
-    
+
 }
 
 

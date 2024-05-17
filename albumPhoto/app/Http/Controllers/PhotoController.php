@@ -35,6 +35,7 @@ use App\Models\Photo;
 use App\Models\Album;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use App\Models\PhotoShared;
 
 class PhotoController extends Controller
 {
@@ -65,10 +66,10 @@ class PhotoController extends Controller
         $request->validate([
             'shareWith' => 'required|email'
         ]);
-
+        $owner = Auth::id();
         $user = User::where('email', $request->shareWith)->first();
         if ($user) {
-            $photo->sharedUsers()->attach($user->id);
+            PhotoShared::addPhotoShared($owner,$photo->id,$user->id);
             return redirect()->route('gallery')->with('success', 'Photo shared successfully!');
         } else {
             return redirect()->route('gallery')->with('error', 'User not found.');
@@ -82,7 +83,6 @@ class PhotoController extends Controller
         ->select('photos.*')
         ->get();
         return view('shared_photos', compact('sharedImages'));
-
     }
 
     public function unshare(Request $request, Photo $photo)
