@@ -23,4 +23,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
     Route::get('/shared-photos',[PhotoController::class,'sharedPhotos'])->name('shared_photos');
     Route::get('/add-default-album', [AlbumController::class, 'createDefaultAlbum'])->name('addDefaultAlbum');
+    Route::get('/sharealbum',[HomeController::class, 'index'])->name('sharealbum');
+    Route::post('/albums/{album}/share', [AlbumController::class, 'share'])->name('albums.share');
+    Route::post('/albums/{album}/unshare', [AlbumController::class, 'unshare'])->name('albums.unshare');
+    Route::get('/albums/{album}/share-list', [AlbumController::class, 'shareList'])->name('albums.share-list');
 });

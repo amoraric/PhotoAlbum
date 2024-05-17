@@ -21,7 +21,7 @@
             <label for="albumSelect">Select Album</label>
             <select class="form-control" id="albumSelect" name="album_id" required>
                 @foreach($albums as $album)
-                    <option value="{{ $album->id }}">{{ $album->name }}</option>
+                <option value="{{ $album->id }}">{{ $album->name }}</option>
                 @endforeach
             </select>
         </div>
@@ -41,18 +41,29 @@
     <h2>Gallery</h2>
     <div class="row">
         @foreach($albums as $album)
-            <div class="col-md-6">
-                <h3>{{ $album->name }}</h3>
-                <div class="row">
-                    @foreach($album->photos as $photo)
-                        <div class="col-md-4 position-relative">
-                            <img src="{{ asset('storage/' . $photo->filename) }}" alt="{{ $photo->photo_name }}" class="img-thumbnail" data-bs-toggle="modal" data-bs-target="#imageModal" @click="showImage('{{ asset('storage/' . $photo->filename) }}')">
-                            <button class="btn btn-secondary position-absolute bottom-0 start-0 m-1" type="button" data-bs-toggle="modal" data-bs-target="#shareModal" @click="setPhotoId({{ $photo->id }})">...</button>
-                        </div>
-                    @endforeach
+        <div class="col-md-6">
+            <h3>{{ $album->name }}</h3>
+            <div class="row mb-2">
+                <div class="col-12 text-end">
+                    <a href="{{ route('sharealbum', ['id' => $album->id]) }}" class="btn btn-primary mb-2">Share Album</a>
+
+                    <!-- Form to send album via email -->
+                    
+                    <button class="btn btn-secondary position-absolute bottom-0 start-0 m-1" type="button" data-bs-toggle="modal" data-bs-target="#shareModalAlbum" @click="setAlbumId({{ $album->id }})">share Album</button>
+
                 </div>
             </div>
+            <div class="row">
+                @foreach($album->photos as $photo)
+                <div class="col-md-4 position-relative">
+                    <img src="{{ asset('storage/' . $photo->filename) }}" alt="{{ $photo->photo_name }}" class="img-thumbnail" data-bs-toggle="modal" data-bs-target="#imageModal" @click="showImage('{{ asset('storage/' . $photo->filename) }}')">
+                    <button class="btn btn-secondary position-absolute bottom-0 start-0 m-1" type="button" data-bs-toggle="modal" data-bs-target="#shareModal" @click="setPhotoId({{ $photo->id }})">share Photo</button>
+                </div>
+                @endforeach
+            </div>
+        </div>
         @endforeach
+
     </div>
 </div>
 
