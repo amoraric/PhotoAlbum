@@ -17,6 +17,7 @@
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     
     <!-- Scripts -->
+    <script src="{{ asset('js/security.js') }}" defer></script>
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 </head>
 <body>
@@ -38,6 +39,9 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-white" href="{{ route('shared_albums') }}">Shared Albums</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="{{ route('shared_photos') }}">Shared Photos</a>
                         </li>
                     </ul>
 

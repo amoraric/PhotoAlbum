@@ -29,17 +29,19 @@
   <title>Photo Album Gallery</title>
   <link href="{{ asset('css/style.css') }}" rel="stylesheet">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
 </head>
 <body>
   <div>
-    <button onclick="window.location.href='{{ route('shared_albums') }}'">Go to Shared Albums</button>
+    <button onclick="window.location.href=' {{ route('shared_albums') }}' ">Go to Shared Albums</button>
     <button style="float: right;" onclick="logout()">Logout</button>
   </div>
   <div>
     @yield('content')
   </div>
   @include('partials.share_popup')
-  <script>
+ <script>
+  /*
     function addPhoto() {
       var formData = new FormData();
       formData.append('photo', $('#photoInput').prop('files')[0]);
@@ -97,7 +99,7 @@
 
     function logout() {
       // Implement logout logic
-    }
+    }*/
   </script>
 </body>
 </html>

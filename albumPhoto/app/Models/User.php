@@ -50,4 +50,10 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Photo::class, 'photo_user');
     }
+
+      // Définir la relation entre User et Album
+      public function albums()
+      {
+          return $this->belongsToMany(Album::class, 'album_user');
+      }
 }

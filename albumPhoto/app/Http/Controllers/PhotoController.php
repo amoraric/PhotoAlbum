@@ -34,6 +34,7 @@ use Illuminate\Http\Request;
 use App\Models\Photo;
 use App\Models\Album;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class PhotoController extends Controller
 {
@@ -51,12 +52,13 @@ class PhotoController extends Controller
         $photo->filename = $path;
         $photo->album_id = $request->album_id;
         $photo->photo_name = $request->photo_name;
-        $photo->name = $request->photo_name; // Optional: Set the 'name' field if necessary
+        //$photo->name = $request->photo_name; // Optional: Set the 'name' field if necessary
         $photo->path = $path; // Set the 'path' field
         $photo->save();
 
-        return response()->json(['success' => true, 'path' => $path]);
-    }
+     //   return response()->json(['success' => true, 'path' => $path]);
+        return redirect()->back();
+      }
 
     public function share(Request $request, Photo $photo)
     {
@@ -68,6 +70,31 @@ class PhotoController extends Controller
         if ($user) {
             $photo->sharedUsers()->attach($user->id);
             return redirect()->route('gallery')->with('success', 'Photo shared successfully!');
+        } else {
+            return redirect()->route('gallery')->with('error', 'User not found.');
+        }
+    }
+
+    public function sharedPhotos(){
+        $userId = Auth::id();
+        $sharedImages = Photo::join('photo_user', 'photos.id', '=', 'photo_user.photo_id')
+        ->where('photo_user.user_id', '=', $userId) // Filtrer les photos partagées avec l'utilisateur connecté
+        ->select('photos.*')
+        ->get();
+        return view('shared_photos', compact('sharedImages'));
+
+    }
+
+    public function unshare(Request $request, Photo $photo)
+    {
+        $request->validate([
+            'unshareWith' => 'required|email'
+        ]);
+
+        $user = User::where('email', $request->unshareWith)->first();
+        if ($user) {
+            $photo->sharedUsers()->detach($user->id);
+            return redirect()->route('gallery')->with('success', 'Photo unshared successfully!');
         } else {
             return redirect()->route('gallery')->with('error', 'User not found.');
         }
