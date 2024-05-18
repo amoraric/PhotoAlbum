@@ -22,8 +22,6 @@ class Album extends Model
         return $this->hasMany(Photo::class);
     }
 
-    
-
     public static function insertAlbum($albumName, $userId)
     {
     // Use the DB facade to insert the album directly into the database
@@ -34,6 +32,4 @@ class Album extends Model
             'updated_at' => now()
         ]);
     }
-
-    
 }

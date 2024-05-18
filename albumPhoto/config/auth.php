@@ -95,7 +95,7 @@ return [
             'provider' => 'users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
             'expire' => 60,
-            'throttle' => 60,
+            'throttle' => 600, // user can request password reset once per hour
         ],
     ],
 
@@ -112,4 +112,8 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    'throttle' => [
+        'max_attempts' => 3,  // Maximum number of attempts before locking out
+        'decay_minutes' => 1, // Number of minutes to lock out
+    ],
 ];

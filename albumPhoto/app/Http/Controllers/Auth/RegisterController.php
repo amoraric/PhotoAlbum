@@ -48,12 +48,33 @@ class RegisterController extends Controller
      */
     protected function validator(array $data)
     {
+        // Custom validation rule to check against a blacklist of common passwords
+        Validator::extend('not_common_password', function ($attribute, $value, $parameters, $validator) {
+            $commonPasswords = [
+                'password', '12345678', '123456789', '1234567890', 'qwerty', 'abc123', 
+                'password1', '12345', '1234', '123456', 'admin', 'letmein', 'welcome', 
+                'monkey', 'login', 'passw0rd'
+            ];
+            return !in_array($value, $commonPasswords);
+        });
+
         return Validator::make($data, [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:50'], // Restrict max length for the name field
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'regex:/[a-z]/', // must contain at least one lowercase letter
+                'regex:/[A-Z]/', // must contain at least one uppercase letter
+                'regex:/[0-9]/', // must contain at least one digit
+                'regex:/[@$!%*?&^_+<>?=,.;:|{}\[\]~`#()\\-]/', // must contain a special character
+                'confirmed',
+                'not_common_password' // Custom rule to prevent common passwords
+            ],
         ]);
     }
+
 
 
     /**

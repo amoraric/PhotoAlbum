@@ -1,33 +1,5 @@
 <?php
 
-// namespace App\Http\Controllers;
-
-// use Illuminate\Http\Request;
-// use App\Models\Album;
-
-// class AlbumController extends Controller
-// {
-    // public function index()
-    // {
-    //     $albums = Album::with('photos')->get();
-    //     return view('gallery', compact('albums'));
-    // }
-
-//     public function store(Request $request)
-//     {
-//         $request->validate([
-//             'album_name' => 'required|string|max:255',
-//         ]);
-
-//         Album::create([
-//             'name' => $request->album_name,
-//             'user_id' => auth()->id(),
-//         ]);
-
-//         return redirect()->route('gallery')->with('success', 'Album created successfully!');
-//     }
-// }
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -61,14 +33,15 @@ class AlbumController extends Controller
 
         return redirect()->route('gallery')->with('success', 'Album created successfully!');
     }
+
     /*
     public function sharedAlbums()
     {
         $sharedAlbums = Album::where('is_shared', true)->with('photos')->get();
         return view('shared_albums', compact('sharedAlbums'));
     }
-    
-*/
+    */
+
     public function sharedAlbums(){
         $userId = Auth::id();
         $sharedAlbums = Album::join('album_shared', 'albums.id', '=', 'album_shared.album_id')
@@ -79,18 +52,13 @@ class AlbumController extends Controller
 
     }
 
-
     public function createDefaultAlbum()
     {
         $userId = auth()->id();
 
-
-
         Album::insertALbum('gallery', $userId);
         return redirect()->route('home')->with('success', 'Default album created successfully!');
     }
-
-
 
     public function share(Request $request, Album $album)
     {
@@ -107,8 +75,6 @@ class AlbumController extends Controller
             return redirect()->route('gallery')->with('error', 'User not found.');
         }
     }
-
-
 
     public function unshare(Request $request, Album $album)
     {
@@ -129,9 +95,4 @@ class AlbumController extends Controller
         $shareList = $album->users()->get(['email']);
         return response()->json($shareList);
     }
-
-
 }
-
-
-

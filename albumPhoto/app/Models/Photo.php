@@ -24,7 +24,6 @@ class Photo extends Model
         return $this->belongsToMany(User::class, 'photo_shared', 'photo_id', 'shared_user_id');
     }
 
-
     public static function addPhoto(Request $request)
     {
         // Validate the request
@@ -38,14 +37,15 @@ class Photo extends Model
         $path = $request->file('photo')->store('photos', 'public');
         $filename = basename($path);
 
-        // Insert the photo data into the database using a raw SQL query
-        $result = DB::insert('INSERT INTO photos (filename, album_id, photo_name, path, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())', [
-            $filename,
-            $request->album_id,
-            $request->photo_name,
-            // $request->photo_name,
-            $path,
-        ]);
+        // Insert the photo data into the database using a secured query
+        $result = DB::table('photos')->insert([
+            'filename' => $filename,
+            'album_id' => $request->album_id,
+            'photo_name' => $request->photo_name,
+            'path' => $path,
+            'created_at' => now(),
+            'updated_at' => now()
+        ]); 
 
         if ($result) {
             // Return the created photo details
@@ -61,6 +61,4 @@ class Photo extends Model
             throw new \Exception('Failed to insert photo data into the database.');
         }
     }
-
-
 }
