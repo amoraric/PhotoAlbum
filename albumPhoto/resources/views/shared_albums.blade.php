@@ -34,5 +34,10 @@
     </div>
 </div>
 
-
+<!-- Add the JavaScript function to handle image click -->
+<script>
+function showImage(src) {
+    document.getElementById('modalImage').src = src;
+}
+</script>
 @endsection
