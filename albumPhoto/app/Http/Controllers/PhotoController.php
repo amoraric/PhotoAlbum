@@ -50,8 +50,8 @@ class PhotoController extends Controller
 
     public function sharedPhotos(){
         $userId = Auth::id();
-        $sharedImages = Photo::join('photo_user', 'photos.id', '=', 'photo_user.photo_id')
-        ->where('photo_user.user_id', '=', $userId) // Filtrer les photos partagées avec l'utilisateur connecté
+        $sharedImages = Photo::join('photo_shared', 'photos.id', '=', 'photo_shared.photo_id')
+        ->where('photo_shared.shared_user_id', '=', $userId) // Filtrer les photos partagées avec l'utilisateur connecté
         ->select('photos.*')
         ->get();
         return view('shared_photos', compact('sharedImages'));

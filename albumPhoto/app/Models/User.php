@@ -49,7 +49,7 @@ class User extends Authenticatable
 
     public function sharedPhotos()
     {
-        return $this->belongsToMany(Photo::class, 'photo_user');
+        return $this->belongsToMany(Photo::class, 'photo_shared');
     }
 
       // Définir la relation entre User et Album
