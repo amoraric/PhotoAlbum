@@ -78,5 +78,5 @@
 
 <!-- Share Modals -->
 <share-modal-photos></share-modal-photos>
-<share-modal-album></share-modal-album> <!-- Ajout du modal de partage d'album -->
+<share-modal-album></share-modal-album>
 @endsection

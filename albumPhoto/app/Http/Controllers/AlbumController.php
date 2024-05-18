@@ -14,8 +14,10 @@ class AlbumController extends Controller
 {
     public function index()
     {
-        $albums = Album::with('photos')->get();
-        return view('gallery', compact('albums'));
+        $userId = Auth::id(); // Get the currently authenticated user's ID
+        $albums = Album::where('user_id', $userId)->with('photos')->get(); // Fetch albums belonging to the user
+
+        return view('gallery', ['albums' => $albums]);
     }
 
     public function store(Request $request)
@@ -24,12 +26,12 @@ class AlbumController extends Controller
             'album_name' => 'required|string|max:255',
         ]);
 
-        $user_id = auth()->id();
+        $userId = Auth::id();
         if (!$user_id) {
             return redirect()->route('gallery')->with('error', 'User not authenticated.');
         }
-
-        Album::insertAlbum($request->album_name, $user_id);
+        $albumName = $request->input('album_name');
+        Album::insertAlbum($album_name, $user_id);
 
         return redirect()->route('gallery')->with('success', 'Album created successfully!');
     }
