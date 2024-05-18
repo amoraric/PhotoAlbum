@@ -45,6 +45,22 @@
                             </div>
                         </div>
 
+                        @if(session('2fa'))
+                        <div class="form-group row">
+                            <label for="2fa_code" class="col-md-4 col-form-label text-md-right">{{ __('2FA Code') }}</label>
+
+                            <div class="col-md-6">
+                                <input id="2fa_code" type="text" class="form-control @error('2fa_code') is-invalid @enderror" name="2fa_code" required>
+
+                                @error('2fa_code')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+                        </div>
+                        @endif
+
                         <div class="form-group row">
                             <div class="col-md-6 offset-md-4">
                                 <div class="form-check">

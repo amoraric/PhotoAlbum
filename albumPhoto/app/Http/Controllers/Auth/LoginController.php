@@ -69,7 +69,7 @@ class LoginController extends Controller
     {
         return $this->limiter()->tooManyAttempts(
             $this->throttleKey($request),
-            Config::get('auth.throttle.max_attempts', 5) // Default to 5 attempts
+            Config::get('auth.throttle.max_attempts')
         );
     }
 
@@ -86,10 +86,21 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
+        $request->session()->forget('2fa_authenticated'); // Clear 2FA session
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    protected function authenticated(Request $request, $user)
+    {
+        if ($user->google2fa_secret && !$request->session()->has('2fa_authenticated')) {
+            $request->session()->put('2fa_authenticated', false);
+            return redirect()->route('2fa.verify');
+        }
+
+        return redirect()->intended($this->redirectPath());
     }
 }

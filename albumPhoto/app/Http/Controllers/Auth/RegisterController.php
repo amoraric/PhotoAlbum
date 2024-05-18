@@ -7,6 +7,11 @@ use App\Models\User;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Password;
+use PragmaRX\Google2FA\Google2FA;
+use PragmaRX\Google2FAQRCode\Google2FA as Google2FAQRCode;
+use App\Models\Album;
+use Illuminate\Http\Request;
 
 class RegisterController extends Controller
 {
@@ -59,40 +64,79 @@ class RegisterController extends Controller
         });
 
         return Validator::make($data, [
-            'name' => ['required', 'string', 'max:50'], // Restrict max length for the name field
+            'name' => ['required', 'string', 'max:50'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => [
                 'required',
                 'string',
-                'min:8',
-                'regex:/[a-z]/', // must contain at least one lowercase letter
-                'regex:/[A-Z]/', // must contain at least one uppercase letter
-                'regex:/[0-9]/', // must contain at least one digit
-                'regex:/[@$!%*?&^_+<>?=,.;:|{}\[\]~`#()\\-]/', // must contain a special character
                 'confirmed',
-                'not_common_password' // Custom rule to prevent common passwords
+                Password::min(8)
+                    ->letters()
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols()
+                    ->uncompromised(), // Ensures the password has not been compromised in a data breach
             ],
         ]);
     }
 
-
-
-    /**
-     * Create a new user instance after a valid registration.
-     *
-     * @param  array  $data
-     * @return \App\Models\User
-     */
-    protected function create(array $data)
+    // Show 2FA setup form
+    public function show2FAForm(Request $request)
     {
+        $data = $request->all();
+        $google2fa = new Google2FA();
+        $secret = $google2fa->generateSecretKey();
+
+        // Store user data and 2FA secret in session
+        $request->session()->put('user_data', $data);
+        $request->session()->put('google2fa_secret', $secret);
+
+        // Generate QR code URL using Google2FAQRCode
+        $google2faQRCode = new Google2FAQRCode();
+        $qrCodeUrl = $google2faQRCode->getQRCodeInline(
+            config('app.name'),
+            $data['email'],
+            $secret
+        );
+
+        return view('2fa.setup', ['qrCodeUrl' => $qrCodeUrl, 'secret' => $secret]);
+    }
+
+    // Verify 2FA code and create user
+    public function verify2FA(Request $request)
+{
+    $this->validate($request, [
+        'one_time_password' => 'required',
+    ]);
+
+    $google2fa = new Google2FA();
+    $secret = $request->session()->get('google2fa_secret');
+
+    $valid = $google2fa->verifyKey($secret, $request->one_time_password);
+
+    if ($valid) {
+        $data = $request->session()->get('user_data');
+
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'google2fa_secret' => $secret,
         ]);
 
-        return $user;
+        $user->is_2fa_authenticated = true; // Set 2FA authenticated flag
+        $user->save();
+
+        $request->session()->forget(['user_data', 'google2fa_secret']);
+        $this->guard()->login($user);
+
+        Album::insertALbum('gallery', $user->id);
+
+        return redirect($this->redirectPath());
+    } else {
+        return redirect()->back()->withErrors(['one_time_password' => 'The provided 2FA code is invalid.']);
     }
+}
 
     /**
      * Handle a registration request for the application.
@@ -100,15 +144,11 @@ class RegisterController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\Response|\Illuminate\Http\JsonResponse
      */
-    public function register(\Illuminate\Http\Request $request)
+    public function register(Request $request)
     {
         $this->validator($request->all())->validate();
 
-        $user = $this->create($request->all());
-
-        $this->guard()->login($user);
-
-        return redirect()->route('addDefaultAlbum'); // c'est nous qui l'avons rajoute
+        // Redirect to 2FA setup form
+        return $this->show2FAForm($request);
     }
-
 }
