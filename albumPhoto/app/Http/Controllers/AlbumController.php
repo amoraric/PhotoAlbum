@@ -72,14 +72,17 @@ class AlbumController extends Controller
 
     public function unshare(Request $request, Album $album)
     {
-        $this->authorize('update', $album);
-
-        $user = User::where('email', $request->input('shareWith'))->first();
-        if ($user && $album->users->contains($user->id)) {
-            $album->users()->detach($user->id);
+        $request->validate([
+            'unshareWith' => 'required|email'
+        ]);
+    
+        $user = User::where('email', $request->unshareWith)->first();
+        if ($user) {
+            $album->sharedUsers()->detach($user->id);
+            return redirect()->route('gallery')->with('success', 'Album unshared successfully!');
+        } else {
+            return redirect()->route('gallery')->with('error', 'User not found.');
         }
-
-        return redirect()->back()->with('status', 'Album unshared successfully!');
     }
 
     public function shareList(Album $album)

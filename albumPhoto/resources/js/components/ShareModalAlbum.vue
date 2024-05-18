@@ -19,6 +19,10 @@
                 <label for="shareWith">Share with (user email):</label>
                 <input type="email" class="form-control" id="shareWith" name="shareWith" required>
               </div>
+              <div class="form-group" v-if="!shareAction">
+                <label for="unshareWith">Unshare with (user email):</label>
+                <input type="email" class="form-control" id="unshareWith" name="unshareWith" required>
+              </div>
               <button type="submit" class="btn btn-primary mt-3">{{ buttonText }}</button>
             </form>
           </div>

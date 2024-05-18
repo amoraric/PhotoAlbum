@@ -18,7 +18,7 @@
   </div>
   @include('partials.share_popup')
  <script>
-
+  /*
     function addPhoto() {
       var formData = new FormData();
       formData.append('photo', $('#photoInput').prop('files')[0]);
@@ -76,7 +76,7 @@
 
     function logout() {
       // Implement logout logic
-    }
+    }*/
   </script>
 </body>
 </html>
