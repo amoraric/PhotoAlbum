@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
-
 class AlbumShared extends Model
 {
     use HasFactory;
@@ -17,9 +16,12 @@ class AlbumShared extends Model
 
     public static function addAlbumShared($owner_id, $album_id, $shared_user_id)
     {
-        // Insert the photo data into the database using a raw SQL query
-        $result = DB::insert('INSERT INTO album_shared (owner_id, album_id, shared_user_id,created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())', [
-            $owner_id, $album_id, $shared_user_id
+        return self::create([
+            'owner_id' => $owner_id,
+            'album_id' => $album_id,
+            'shared_user_id' => $shared_user_id,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 

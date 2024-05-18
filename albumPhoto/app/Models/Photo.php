@@ -19,7 +19,7 @@ class Photo extends Model
     {
         return $this->belongsTo(Album::class);
     }
-    
+
     public function sharedUsers()
     {
         return $this->belongsToMany(User::class, 'photo_shared', 'photo_id', 'shared_user_id');
@@ -38,7 +38,7 @@ class Photo extends Model
         $path = $request->file('photo')->store('photos', 'public');
         $filename = basename($path);
 
-        // Insert the photo data into the database using a secured query
+        // Insert the photo data into the database using a secure query
         $result = DB::table('photos')->insert([
             'filename' => $filename,
             'album_id' => $request->album_id,

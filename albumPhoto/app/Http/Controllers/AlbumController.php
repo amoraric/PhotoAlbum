@@ -27,22 +27,14 @@ class AlbumController extends Controller
         ]);
 
         $userId = Auth::id();
-        if (!$user_id) {
+        if (!$userId) {
             return redirect()->route('gallery')->with('error', 'User not authenticated.');
         }
         $albumName = $request->input('album_name');
-        Album::insertAlbum($album_name, $user_id);
+        Album::insertAlbum($albumName, $userId);
 
         return redirect()->route('gallery')->with('success', 'Album created successfully!');
     }
-
-    /*
-    public function sharedAlbums()
-    {
-        $sharedAlbums = Album::where('is_shared', true)->with('photos')->get();
-        return view('shared_albums', compact('sharedAlbums'));
-    }
-    */
 
     public function sharedAlbums(){
         $userId = Auth::id();
@@ -96,6 +88,4 @@ class AlbumController extends Controller
         $sharedUsers = $album->sharedUsers()->get(['email']);
         return response()->json($sharedUsers);
     }
-
-
 }
