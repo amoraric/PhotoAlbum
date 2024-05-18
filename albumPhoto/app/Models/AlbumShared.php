@@ -16,7 +16,7 @@ class AlbumShared extends Model
 
     public static function addAlbumShared($owner_id, $album_id, $shared_user_id)
     {
-        return self::create([
+        return DB::table('album_shared')->insert([
             'owner_id' => $owner_id,
             'album_id' => $album_id,
             'shared_user_id' => $shared_user_id,

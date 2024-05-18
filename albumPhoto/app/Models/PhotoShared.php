@@ -16,8 +16,7 @@ class PhotoShared extends Model
 
     public static function addPhotoShared($owner_id, $photo_id, $shared_user_id)
     {
-        // Insert the photo data into the database using a raw SQL query
-        return self::create([
+        return DB::table('photo_shared')->insert([
             'owner_id' => $owner_id,
             'photo_id' => $photo_id,
             'shared_user_id' => $shared_user_id,
