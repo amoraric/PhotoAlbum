@@ -71,5 +71,11 @@ class PhotoController extends Controller
             return redirect()->route('gallery')->with('error', 'User not found.');
         }
     }
-}
 
+    public function shareList(Photo $photo)
+    {
+        $this->authorize('view', $photo);
+        $sharedUsers = $photo->sharedUsers()->get(['email']);
+        return response()->json($sharedUsers);
+    }    
+}

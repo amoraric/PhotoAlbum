@@ -71,6 +71,19 @@ export default {
           this.shareList = data;
         });
     },
+    resetShareList() {
+      this.shareList = [];
+      this.showForm = false;
+      this.showList = false;
+    }
   },
+  mounted() {
+    const modalElement = document.getElementById('shareModalPhotos');
+    modalElement.addEventListener('hidden.bs.modal', this.resetShareList);
+  },
+  beforeDestroy() {
+    const modalElement = document.getElementById('shareModalPhotos');
+    modalElement.removeEventListener('hidden.bs.modal', this.resetShareList);
+  }
 };
 </script>

@@ -15,12 +15,16 @@ class PhotoShared extends Model
 
     protected $fillable = ['owner_id', 'photo_id', 'shared_user_id'];
 
-
     public static function addPhotoShared($owner_id, $photo_id, $shared_user_id)
     {
         // Insert the photo data into the database using a raw SQL query
         $result = DB::insert('INSERT INTO photo_shared (owner_id, photo_id, shared_user_id,created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())', [
             $owner_id, $photo_id, $shared_user_id
         ]);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'shared_user_id');
     }
 }

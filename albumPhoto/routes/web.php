@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\UserController;
 
+
 Route::get('/', function () {
     return view('welcome');
 });

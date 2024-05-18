@@ -93,8 +93,9 @@ class AlbumController extends Controller
     public function shareList(Album $album)
     {
         $this->authorize('view', $album);
-
-        $shareList = $album->users()->get(['email']);
-        return response()->json($shareList);
+        $sharedUsers = $album->sharedUsers()->get(['email']);
+        return response()->json($sharedUsers);
     }
+
+
 }

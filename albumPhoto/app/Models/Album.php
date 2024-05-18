@@ -22,6 +22,11 @@ class Album extends Model
         return $this->hasMany(Photo::class);
     }
 
+    public function sharedUsers()
+    {
+        return $this->belongsToMany(User::class, 'album_shared', 'album_id', 'shared_user_id');
+    }
+
     public static function insertAlbum($albumName, $userId)
     {
     // Use the DB facade to insert the album directly into the database

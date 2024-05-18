@@ -19,6 +19,7 @@ class Photo extends Model
     {
         return $this->belongsTo(Album::class);
     }
+    
     public function sharedUsers()
     {
         return $this->belongsToMany(User::class, 'photo_shared', 'photo_id', 'shared_user_id');
