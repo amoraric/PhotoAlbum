@@ -56,8 +56,8 @@ class RegisterController extends Controller
         // Custom validation rule to check against a blacklist of common passwords
         Validator::extend('not_common_password', function ($attribute, $value, $parameters, $validator) {
             $commonPasswords = [
-                'password', '12345678', '123456789', '1234567890', 'qwerty', 'abc123', 
-                'password1', '12345', '1234', '123456', 'admin', 'letmein', 'welcome', 
+                'password', '12345678', '123456789', '1234567890', 'qwerty', 'abc123',
+                'password1', '12345', '1234', '123456', 'admin', 'letmein', 'welcome',
                 'monkey', 'login', 'passw0rd'
             ];
             return !in_array($value, $commonPasswords);
@@ -116,12 +116,14 @@ class RegisterController extends Controller
 
     if ($valid) {
         $data = $request->session()->get('user_data');
-
+        $keyPair = User::generateKeyPair();
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'google2fa_secret' => $secret,
+            'public_key' => $keyPair['public_key'],
+            'private_key'=> $keyPair['private_key'],
         ]);
 
         $user->is_2fa_authenticated = true; // Set 2FA authenticated flag
