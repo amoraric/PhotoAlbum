@@ -29,4 +29,5 @@ class PhotoShared extends Model
     {
         return $this->belongsTo(User::class, 'shared_user_id');
     }
+
 }

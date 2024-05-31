@@ -66,10 +66,12 @@ class User extends Authenticatable
       }
       public static function generateKeyPair()
     {
-    $config = array(
+        $opensslConf = getenv('OPENSSL_CONF');
+        $config = array(
         "digest_alg" => "sha256",
         "private_key_bits" => 2048,
         "private_key_type" => OPENSSL_KEYTYPE_RSA,
+        "config" => $opensslConf
 
     );
 

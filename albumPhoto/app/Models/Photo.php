@@ -13,7 +13,7 @@ class Photo extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['filename', 'album_id', 'photo_name', 'path'];
+    protected $fillable = ['filename', 'album_id', 'photo_name', 'path','temp_path'];
 
     public function album()
     {
@@ -46,7 +46,7 @@ class Photo extends Model
             'path' => $path,
             'created_at' => now(),
             'updated_at' => now()
-        ]); 
+        ]);
 
         if ($result) {
             // Return the created photo details
@@ -61,5 +61,10 @@ class Photo extends Model
             // Handle the error if the insertion was not successful
             throw new \Exception('Failed to insert photo data into the database.');
         }
+    }
+    public function updateTempPath($tempPath)
+    {
+        $this->temp_path = $tempPath;
+        $this->save();
     }
 }

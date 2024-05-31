@@ -9,13 +9,52 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Photo;
 use App\Models\User;
 use App\Models\AlbumShared;
+use phpseclib3\Crypt\PublicKeyLoader;
+use Illuminate\Support\Facades\Storage;
+use phpseclib3\Crypt\AES;
 
 class AlbumController extends Controller
 {
+
+
     public function index()
     {
         $userId = Auth::id(); // Get the currently authenticated user's ID
         $albums = Album::where('user_id', $userId)->with('photos')->get(); // Fetch albums belonging to the user
+        // Decrypt the photos in each album
+        foreach ($albums as $album) {
+            foreach ($album->photos as $photo) {
+                // Skip decryption if the photo doesn't have encrypted data
+                if (!$photo->encrypted_key || !$photo->encrypted_iv) {
+                    continue;
+                }
+
+                // Load the user's private key
+                $privateKeyPath = storage_path('app/keys/' . $album->user->private_key_path);
+                $privateKeyContent = file_get_contents($privateKeyPath);
+                $privateKey = PublicKeyLoader::load($privateKeyContent);
+
+                // Decrypt the AES key and IV
+                $aesKey = $privateKey->decrypt(base64_decode($photo->encrypted_key));
+                $aesIv = $privateKey->decrypt(base64_decode($photo->encrypted_iv));
+
+                // Decrypt the photo content using AES
+                $path = storage_path('app/public/' . $photo->filename);
+                $encryptedContent = file_get_contents($path);
+
+                $aes = new AES('cbc');
+                $aes->setKey($aesKey);
+                $aes->setIV($aesIv);
+                $decryptedContent = $aes->decrypt($encryptedContent);
+
+                // Save the decrypted content temporarily
+                $tempPath = 'temp/' . basename($photo->filename);
+                file_put_contents(storage_path('app/public/' . $tempPath), $decryptedContent);
+
+                // Update the photo's temp_path
+                $photo->temp_path = $tempPath;
+            }
+        }
 
         return view('gallery', ['albums' => $albums]);
     }
@@ -36,15 +75,44 @@ class AlbumController extends Controller
         return redirect()->route('gallery')->with('success', 'Album created successfully!');
     }
 
-    public function sharedAlbums(){
-        $userId = Auth::id();
-        $sharedAlbums = Album::join('album_shared', 'albums.id', '=', 'album_shared.album_id')
-        ->where('album_shared.shared_user_id', '=', $userId) // Filtrer les albums partagés avec l'utilisateur connecté
+    public function sharedAlbums()
+{
+    $userId = Auth::id();
+    $sharedAlbums = Album::join('album_shared', 'albums.id', '=', 'album_shared.album_id')
+        ->where('album_shared.shared_user_id', '=', $userId)
         ->select('albums.*')
         ->get();
-        return view('shared_albums', compact('sharedAlbums'));
 
+    // Decrypt the photos in each shared album
+    foreach ($sharedAlbums as $album) {
+        foreach ($album->photos as $photo) {
+            $path = storage_path('app/public/' . $photo->filename);
+            $encryptedContent = file_get_contents($path);
+
+            $user = $photo->album->user;
+            $privateKeyPath = storage_path('app/keys/' . $user->private_key_path);
+            $privateKeyContent = file_get_contents($privateKeyPath);
+            $privateKey = PublicKeyLoader::load($privateKeyContent);
+
+            $aesKey = $privateKey->decrypt(base64_decode($photo->encrypted_key));
+            $aesIv = $privateKey->decrypt(base64_decode($photo->encrypted_iv));
+
+            // Decrypt the photo content using AES
+            $aes = new AES('cbc');
+            $aes->setKey($aesKey);
+            $aes->setIV($aesIv);
+            $decryptedContent = $aes->decrypt($encryptedContent);
+
+            // Save the decrypted content temporarily
+            $tempPath = storage_path('app/public/temp/' . basename($photo->filename));
+            file_put_contents($tempPath, $decryptedContent);
+
+            $photo->temp_path = 'temp/' . basename($photo->filename); // Update the photo with the temporary path
+        }
     }
+
+    return view('shared_albums', compact('sharedAlbums'));
+}
 
     public function createDefaultAlbum()
     {
@@ -75,7 +143,7 @@ class AlbumController extends Controller
         $request->validate([
             'unshareWith' => 'required|email'
         ]);
-    
+
         $user = User::where('email', $request->unshareWith)->first();
         if ($user) {
             $album->sharedUsers()->detach($user->id);
