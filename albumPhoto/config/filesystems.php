@@ -27,10 +27,24 @@ return [
     | Supported Drivers: "local", "ftp", "sftp", "s3"
     |
     */
-    
+
     'cloud' => env('FILESYSTEM_CLOUD', 's3'),
 
     'disks' => [
+        'keys' => [
+            'driver' => 'local',
+            'root' => storage_path('app/keys'),
+            'permissions' => [
+                'file' => [
+                    'public' => 0600,
+                    'private' => 0600,
+                ],
+                'dir' => [
+                    'public' => 0700,
+                    'private' => 0700,
+                ],
+            ],
+        ],
 
         'local' => [
             'driver' => 'local',

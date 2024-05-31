@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table){
-            $table->text('public_key')->nullable();
-            $table->text('private_key')->nullable();
+            $table->dropColumn('private_key');
         });
     }
 
@@ -23,8 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('public_key');
-            $table->dropColumn('private_key');
+            $table->text('private_key')->nullable();
         });
     }
 };

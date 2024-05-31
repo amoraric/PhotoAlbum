@@ -117,13 +117,30 @@ class RegisterController extends Controller
     if ($valid) {
         $data = $request->session()->get('user_data');
         $keyPair = User::generateKeyPair();
+
+        // Define the directory and file name for the private key
+        $privateKeyDir = storage_path('app/keys');
+        $privateKeyFileName = 'private_key_' . uniqid() . '.pem';
+        $privateKeyPath = $privateKeyDir . '/' . $privateKeyFileName;
+
+        // Ensure the directory exists
+        if (!file_exists($privateKeyDir)) {
+            mkdir($privateKeyDir, 0700, true);
+        }
+
+        // Store the private key in a file
+        file_put_contents($privateKeyPath, $keyPair['private_key']);
+
+        // Ensure the file has the correct permissions
+        chmod($privateKeyPath, 0600);
+
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'google2fa_secret' => $secret,
-            'public_key' => $keyPair['public_key'],
-            'private_key'=> $keyPair['private_key'],
+            'public_key' => $keyPair['public_key'],  // Store public key in the database
+            'private_key_path' => $privateKeyFileName,  // Store the file name for the private key
         ]);
 
         $user->is_2fa_authenticated = true; // Set 2FA authenticated flag
@@ -132,13 +149,15 @@ class RegisterController extends Controller
         $request->session()->forget(['user_data', 'google2fa_secret']);
         $this->guard()->login($user);
 
-        Album::insertALbum('gallery', $user->id);
+        Album::insertAlbum('gallery', $user->id);
 
         return redirect($this->redirectPath());
     } else {
         return redirect()->back()->withErrors(['one_time_password' => 'The provided 2FA code is invalid.']);
     }
 }
+
+
 
     /**
      * Handle a registration request for the application.

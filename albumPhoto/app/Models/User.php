@@ -24,7 +24,7 @@ class User extends Authenticatable
         'password',
         'google2fa_secret',
         'public_key',
-        'private_key'
+        'private_key_path',
     ];
 
     /**
@@ -65,19 +65,24 @@ class User extends Authenticatable
           return $this->hasMany(Photo::class);
       }
       public static function generateKeyPair()
-      {
-          $config = array("digest_alg" => "sha256",
-          "private_key_bits" => 2048,
-          "private_key_type" => OPENSSL_KEYTYPE_RSA,);
+    {
+    $config = array(
+        "digest_alg" => "sha256",
+        "private_key_bits" => 2048,
+        "private_key_type" => OPENSSL_KEYTYPE_RSA,
 
-          $res = openssl_pkey_new($config);
-          if ($res === false) {
-            throw new \Exception('Failed to generate key pair: ' . openssl_error_string());
-        }
-          openssl_pkey_export($res,$privateKey);
-          $publicKey = openssl_pkey_get_details($res)['key'];
+    );
 
-         return ['private_key' => $privateKey, 'public_key' => $publicKey];
-      }
+    $res = openssl_pkey_new($config);
+    if ($res === false) {
+        throw new \Exception('Failed to generate key pair: ' . openssl_error_string());
+    }
+
+    openssl_pkey_export($res, $privateKey);
+    $publicKey = openssl_pkey_get_details($res)['key'];
+
+    return ['private_key' => $privateKey, 'public_key' => $publicKey];
+}
+
 
 }

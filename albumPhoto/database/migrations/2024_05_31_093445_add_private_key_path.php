@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table){
-            $table->text('public_key')->nullable();
-            $table->text('private_key')->nullable();
+        Schema::table('users', function (Blueprint $table) {
+            $table->text('private_key_path')->nullable();
         });
     }
 
@@ -22,9 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('public_key');
-            $table->dropColumn('private_key');
+        Schema::table('users', function (Blueprint $table){
+            $table->dropColumn('private_key_path');
         });
     }
 };
