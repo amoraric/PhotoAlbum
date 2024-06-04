@@ -12,6 +12,7 @@ use App\Models\AlbumShared;
 use phpseclib3\Crypt\PublicKeyLoader;
 use Illuminate\Support\Facades\Storage;
 use phpseclib3\Crypt\AES;
+use Illuminate\Support\Facades\File;
 
 class AlbumController extends Controller
 {
@@ -41,6 +42,11 @@ class AlbumController extends Controller
                 // Decrypt the photo content using AES
                 $path = storage_path('app/public/' . $photo->filename);
                 $encryptedContent = file_get_contents($path);
+
+                if (!File::exists(storage_path('app/public/temp'))) {
+                    File::makeDirectory(storage_path('app/public/temp'), 0755, true);
+          } 
+          
 
                 $aes = new AES('cbc');
                 $aes->setKey($aesKey);

@@ -12,6 +12,8 @@ use phpseclib3\Crypt\RSA;
 use phpseclib3\Crypt\PublicKeyLoader;
 use Illuminate\Support\Facades\Storage;
 use phpseclib3\Crypt\AES;
+use Illuminate\Support\Facades\File;
+
 
 
 class PhotoController extends Controller
@@ -50,6 +52,10 @@ class PhotoController extends Controller
         // Generate a unique filename
         $filename = uniqid() . '.' . $photoFile->getClientOriginalExtension();
         $path = storage_path('app/public/photos/' . $filename);
+     
+        if (!File::exists(storage_path('app/public/photos'))) {
+            File::makeDirectory(storage_path('app/public/photos'), 0755, true);
+        } 
 
         // Store the encrypted photo content
         file_put_contents($path, $encryptedContent);
