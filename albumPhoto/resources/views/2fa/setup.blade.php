@@ -13,7 +13,7 @@
                         {!! $qrCodeUrl !!}
                     </div>
                     <p class="text-center mt-3">Or enter this secret key manually: <strong>{{ $secret }}</strong></p>
-                    <form method="POST" action="{{ route('2fa.setup.verify') }}">
+                    <form id="2faForm" method="POST">
                         @csrf
 
                         <div class="form-group row mt-3">

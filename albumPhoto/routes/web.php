@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\KeyController;
 
 
 Route::get('/', function () {
@@ -54,3 +55,6 @@ Route::post('register', [RegisterController::class, 'register'])->middleware('th
 // Route to show the 2FA setup form
 Route::post('2fa/setup', [RegisterController::class, 'show2FAForm'])->name('2fa.setup.show');
 Route::post('2fa/setup/verify', [RegisterController::class, 'verify2FA'])->name('2fa.setup.verify');
+
+// New routes for storing keys
+Route::post('keys/store', [KeyController::class, 'storeKeys'])->name('keys.store');

@@ -14,7 +14,7 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('2fa.verify.post') }}">
+                    <form id="2faForm" method="POST">
                         @csrf
 
                         <div class="form-group row">

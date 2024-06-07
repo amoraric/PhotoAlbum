@@ -81,17 +81,24 @@ class RegisterController extends Controller
     }
 
     // Show 2FA setup form
+    public function register(Request $request)
+    {
+        $this->validator($request->all())->validate();
+
+        $data = $request->all();
+        $request->session()->put('user_data', $data);
+
+        return $this->show2FAForm($request);
+    }
+
     public function show2FAForm(Request $request)
     {
-        $data = $request->all();
+        $data = $request->session()->get('user_data');
         $google2fa = new Google2FA();
         $secret = $google2fa->generateSecretKey();
 
-        // Store user data and 2FA secret in session
-        $request->session()->put('user_data', $data);
         $request->session()->put('google2fa_secret', $secret);
 
-        // Generate QR code URL using Google2FAQRCode
         $google2faQRCode = new Google2FAQRCode();
         $qrCodeUrl = $google2faQRCode->getQRCodeInline(
             config('app.name'),
@@ -102,79 +109,33 @@ class RegisterController extends Controller
         return view('2fa.setup', ['qrCodeUrl' => $qrCodeUrl, 'secret' => $secret]);
     }
 
-    // Verify 2FA code and create user
     public function verify2FA(Request $request)
-{
-    $this->validate($request, [
-        'one_time_password' => 'required',
-    ]);
-
-    $google2fa = new Google2FA();
-    $secret = $request->session()->get('google2fa_secret');
-
-    $valid = $google2fa->verifyKey($secret, $request->one_time_password);
-
-    if ($valid) {
-        $data = $request->session()->get('user_data');
-        $EncKeyPair = User::generateKeyPair();
-        $SignKeyPair = User::generateKeyPair();
-
-        // Define the directory and file name for the private key
-        $privateKeyDir = storage_path('app/keys');
-        $EncprivateKeyFileName = ''.$data['email'] . '.pem';
-        $SignprivateKeyFileName = ''.$data['email'] . '.sign.pem';
-        $EncprivateKeyPath = $privateKeyDir . '/' . $EncprivateKeyFileName;
-        $SignprivateKeyPath = $privateKeyDir . '/' . $SignprivateKeyFileName;
-
-        // Ensure the directory exists
-        if (!file_exists($privateKeyDir)) {
-            mkdir($privateKeyDir, 0700, true);
-        }
-
-        // Store the private key in a file
-        file_put_contents($EncprivateKeyPath, $EncKeyPair['private_key']);
-        file_put_contents($SignprivateKeyPath, $SignKeyPair['private_key']);
-
-        // Ensure the file has the correct permissions
-        chmod($EncprivateKeyPath, 0600);
-        chmod($SignprivateKeyPath, 0600);
-
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-            'google2fa_secret' => $secret,
-            'public_key_enc' => $EncKeyPair['public_key'],
-            'public_key_sign' => $SignKeyPair['public_key']  // Store public key in the database
+    {
+        $this->validate($request, [
+            'one_time_password' => 'required',
         ]);
 
-        $user->is_2fa_authenticated = true; // Set 2FA authenticated flag
-        $user->save();
+        $google2fa = new Google2FA();
+        $secret = $request->session()->get('google2fa_secret');
 
-        $request->session()->forget(['user_data', 'google2fa_secret']);
-        $this->guard()->login($user);
+        $valid = $google2fa->verifyKey($secret, $request->one_time_password);
 
-        Album::insertAlbum('gallery', $user->id);
+        if ($valid) {
+            $data = $request->session()->get('user_data');
+            $request->session()->forget(['user_data', 'google2fa_secret']);
 
-        return redirect($this->redirectPath());
-    } else {
-        return redirect()->back()->withErrors(['one_time_password' => 'The provided 2FA code is invalid.']);
-    }
-}
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => Hash::make($data['password']),
+                'google2fa_secret' => $secret,
+            ]);
 
+            $request->session()->put('email', $user->email);
 
-
-    /**
-     * Handle a registration request for the application.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\Response|\Illuminate\Http\JsonResponse
-     */
-    public function register(Request $request)
-    {
-        $this->validator($request->all())->validate();
-
-        // Redirect to 2FA setup form
-        return $this->show2FAForm($request);
+            return response()->json(['valid' => true, 'email' => $user->email]);
+        } else {
+            return response()->json(['valid' => false], 401);
+        }
     }
 }

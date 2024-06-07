@@ -21,7 +21,7 @@
             <label for="albumSelect">Select Album</label>
             <select class="form-control" id="albumSelect" name="album_id" required>
                 @foreach($albums as $album)
-                <option value="{{ $album->id }}">{{ $album->name }}</option>
+                    <option value="{{ $album->id }}">{{ $album->name }}</option>
                 @endforeach
             </select>
         </div>
@@ -33,9 +33,106 @@
             <label for="photoFile">Upload Photo</label>
             <input type="file" class="form-control-file" id="photoFile" name="photo" accept="image/*" required>
         </div>
-        <button type="submit" class="btn btn-primary">Upload Photo</button>
+        <button type="submit" id="buttonUploadPhoto" class="btn btn-primary">Upload Photo</button>
     </form>
+<!-- 
+    <script>
+    $(document).ready(function() {
+        $('#photoForm').on('submit', function(event) {
+            event.preventDefault();
 
+            let photoFile = $('#photoFile')[0].files[0];
+            let albumId = $('#albumSelect').val();
+            let photoName = $('#photoName').val();
+
+            if (!photoFile || !albumId || !photoName) {
+                alert("All fields are required.");
+                return;
+            }
+
+            // Read the file content
+            let reader = new FileReader();
+            reader.onload = async function(e) {
+                let photoContent = e.target.result;
+
+                // Generate AES key and IV
+                let aesKey = await crypto.subtle.generateKey(
+                    { name: "AES-CBC", length: 256 },
+                    true,
+                    ["encrypt", "decrypt"]
+                );
+                let aesIv = crypto.getRandomValues(new Uint8Array(16));
+
+                // Encrypt the photo content
+                let encryptedContent = await crypto.subtle.encrypt(
+                    { name: "AES-CBC", iv: aesIv },
+                    aesKey,
+                    photoContent
+                );
+
+                // Export AES key and IV for encryption
+                let rawAesKey = await crypto.subtle.exportKey("raw", aesKey);
+                let rawAesIv = new Uint8Array(aesIv.buffer);
+
+                // Encrypt AES key using your own public key
+                // Assuming you have your own public key (in PEM format)
+                let publicKeyPem = `-----BEGIN PUBLIC KEY-----
+                ...YourPublicKeyHere...
+                -----END PUBLIC KEY-----`;
+
+                let publicKey = await crypto.subtle.importKey(
+                    "spki",
+                    pemToArrayBuffer(publicKeyPem),
+                    { name: "RSA-OAEP", hash: "SHA-256" },
+                    true,
+                    ["encrypt"]
+                );
+
+                let encryptedKey = await crypto.subtle.encrypt(
+                    { name: "RSA-OAEP" },
+                    publicKey,
+                    rawAesKey
+                );
+
+                // Prepare the data to be sent
+                let formData = new FormData();
+                formData.append('photo', new Blob([encryptedContent]), photoFile.name);
+                formData.append('album_id', albumId);
+                formData.append('photo_name', photoName);
+                formData.append('encrypted_key', btoa(String.fromCharCode.apply(null, new Uint8Array(encryptedKey))));
+                formData.append('iv', btoa(String.fromCharCode.apply(null, rawAesIv)));
+
+                // Send the data to the server via AJAX
+                $.ajax({
+                    url: '{{ route('photos.store') }}', // Your server endpoint to handle the upload
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        alert('Photo uploaded successfully!');
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        alert('Failed to upload photo: ' + textStatus);
+                    }
+                });
+            };
+            reader.readAsArrayBuffer(photoFile);
+        });
+
+        function pemToArrayBuffer(pem) {
+            let b64Lines = pem.replace(/-----[A-Z ]+-----/g, "").trim();
+            let b64 = b64Lines.replace(/\n/g, "");
+            let binaryString = atob(b64);
+            let len = binaryString.length;
+            let bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+    });
+    </script> -->
     <hr>
 
     <h2>Gallery</h2>
