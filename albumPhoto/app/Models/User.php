@@ -24,7 +24,6 @@ class User extends Authenticatable
         'password',
         'google2fa_secret',
         'public_key',
-        'private_key_path',
     ];
 
     /**
@@ -64,27 +63,47 @@ class User extends Authenticatable
       {
           return $this->hasMany(Photo::class);
       }
+
       public static function generateKeyPair()
-    {
-        $opensslConf = getenv('OPENSSL_CONF');
-        $config = array(
-        "digest_alg" => "sha256",
-        "private_key_bits" => 2048,
-        "private_key_type" => OPENSSL_KEYTYPE_RSA,
-        "config" => $opensslConf
+      {
+          // Get the OpenSSL configuration path from the environment variable
+          $opensslConf = getenv('OPENSSL_CONF');
+          if ($opensslConf === false) {
+              throw new \Exception('OPENSSL_CONF environment variable is not set');
+          }
 
-    );
+          // Configuration array for OpenSSL
+          $config = array(
+              "digest_alg" => "sha256",
+              "private_key_bits" => 2048,
+              "private_key_type" => OPENSSL_KEYTYPE_RSA,
+              "config" => $opensslConf
+          );
 
-    $res = openssl_pkey_new($config);
-    if ($res === false) {
-        throw new \Exception('Failed to generate key pair: ' . openssl_error_string());
-    }
+          // Generate a new private (and public) key pair
+          $res = openssl_pkey_new($config);
+          if ($res === false) {
+              throw new \Exception('Failed to generate key pair: ' . openssl_error_string());
+          }
 
-    openssl_pkey_export($res, $privateKey);
-    $publicKey = openssl_pkey_get_details($res)['key'];
+          // Export the private key to a variable
+          $privateKey = '';
+          if (!openssl_pkey_export($res, $privateKey, null, $config)) {
+              throw new \Exception('Failed to export private key: ' . openssl_error_string());
+          }
 
-    return ['private_key' => $privateKey, 'public_key' => $publicKey];
-}
+          // Extract the public key from the key pair
+          $keyDetails = openssl_pkey_get_details($res);
+          if ($keyDetails === false) {
+              throw new \Exception('Failed to get key details: ' . openssl_error_string());
+          }
+
+          $publicKey = $keyDetails['key'];
+
+          // Return the key pair
+          return ['private_key' => $privateKey, 'public_key' => $publicKey];
+      }
+
 
 
 }

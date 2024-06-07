@@ -120,7 +120,7 @@ class RegisterController extends Controller
 
         // Define the directory and file name for the private key
         $privateKeyDir = storage_path('app/keys');
-        $privateKeyFileName = 'private_key_' . uniqid() . '.pem';
+        $privateKeyFileName = ''.$data['email'] . '.pem';
         $privateKeyPath = $privateKeyDir . '/' . $privateKeyFileName;
 
         // Ensure the directory exists
@@ -140,7 +140,6 @@ class RegisterController extends Controller
             'password' => Hash::make($data['password']),
             'google2fa_secret' => $secret,
             'public_key' => $keyPair['public_key'],  // Store public key in the database
-            'private_key_path' => $privateKeyFileName,  // Store the file name for the private key
         ]);
 
         $user->is_2fa_authenticated = true; // Set 2FA authenticated flag

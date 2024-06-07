@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Storage;
 
 class LoginController extends Controller
 {
@@ -36,6 +37,7 @@ class LoginController extends Controller
      *
      * @return void
      */
+
     public function __construct()
     {
         $this->middleware('guest')->except('logout');
@@ -87,6 +89,10 @@ class LoginController extends Controller
     public function logout(Request $request)
     {
         $request->session()->forget('2fa_authenticated'); // Clear 2FA session
+        $tempPath = 'public/temp';
+        if (Storage::exists($tempPath)) {
+        Storage::deleteDirectory($tempPath);
+        }
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
@@ -103,4 +109,5 @@ class LoginController extends Controller
 
         return redirect()->intended($this->redirectPath());
     }
+
 }

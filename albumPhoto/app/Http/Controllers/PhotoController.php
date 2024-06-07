@@ -52,10 +52,10 @@ class PhotoController extends Controller
         // Generate a unique filename
         $filename = uniqid() . '.' . $photoFile->getClientOriginalExtension();
         $path = storage_path('app/public/photos/' . $filename);
-     
+
         if (!File::exists(storage_path('app/public/photos'))) {
             File::makeDirectory(storage_path('app/public/photos'), 0755, true);
-        } 
+        }
 
         // Store the encrypted photo content
         file_put_contents($path, $encryptedContent);
@@ -104,7 +104,7 @@ class PhotoController extends Controller
             $encryptedContent = file_get_contents($path);
 
             $user = $photo->album->user;
-            $privateKeyPath = storage_path('app/keys/' . $user->private_key_path);
+            $privateKeyPath = storage_path('app/keys/' . $user->email . '.pem');
             $privateKeyContent = file_get_contents($privateKeyPath);
             $privateKey = PublicKeyLoader::load($privateKeyContent);
 
@@ -118,6 +118,9 @@ class PhotoController extends Controller
             $decryptedContent = $aes->decrypt($encryptedContent);
 
             // Save the decrypted content temporarily
+            if (!File::exists(storage_path('app/public/temp'))) {
+                File::makeDirectory(storage_path('app/public/temp'), 0755, true);
+            }
             $tempPath = storage_path('app/public/temp/' . basename($photo->filename));
             file_put_contents($tempPath, $decryptedContent);
 

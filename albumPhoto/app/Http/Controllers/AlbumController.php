@@ -31,7 +31,7 @@ class AlbumController extends Controller
                 }
 
                 // Load the user's private key
-                $privateKeyPath = storage_path('app/keys/' . $album->user->private_key_path);
+                $privateKeyPath = storage_path('app/keys/' . $album->user->email . '.pem');
                 $privateKeyContent = file_get_contents($privateKeyPath);
                 $privateKey = PublicKeyLoader::load($privateKeyContent);
 
@@ -45,8 +45,8 @@ class AlbumController extends Controller
 
                 if (!File::exists(storage_path('app/public/temp'))) {
                     File::makeDirectory(storage_path('app/public/temp'), 0755, true);
-          } 
-          
+          }
+
 
                 $aes = new AES('cbc');
                 $aes->setKey($aesKey);
@@ -96,7 +96,7 @@ class AlbumController extends Controller
             $encryptedContent = file_get_contents($path);
 
             $user = $photo->album->user;
-            $privateKeyPath = storage_path('app/keys/' . $user->private_key_path);
+            $privateKeyPath = storage_path('app/keys/' . $user->email . '.pem');
             $privateKeyContent = file_get_contents($privateKeyPath);
             $privateKey = PublicKeyLoader::load($privateKeyContent);
 
