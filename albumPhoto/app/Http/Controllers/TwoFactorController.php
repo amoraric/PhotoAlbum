@@ -25,9 +25,8 @@ class TwoFactorController extends Controller
         $valid = $google2fa->verifyKey($user->google2fa_secret, $request->one_time_password);
 
         if ($valid) {
-            $user->is_2fa_authenticated = true;
-            $user->save();
-            return redirect()->route('gallery'); // Redirect to the gallery page
+            $request->session()->put('2fa_authenticated', true);
+            return redirect()->intended('/home');
         } else {
             return redirect()->back()->withErrors(['one_time_password' => 'The provided 2FA code is invalid.']);
         }

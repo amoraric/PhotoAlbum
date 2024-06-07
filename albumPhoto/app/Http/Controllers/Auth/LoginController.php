@@ -102,7 +102,7 @@ class LoginController extends Controller
 
     protected function authenticated(Request $request, $user)
     {
-        if ($user->google2fa_secret && !$request->session()->has('2fa_authenticated')) {
+        if ($user->google2fa_secret && !$request->session()->get('2fa_authenticated', false)) {
             $request->session()->put('2fa_authenticated', false);
             return redirect()->route('2fa.verify');
         }

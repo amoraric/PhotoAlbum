@@ -15,10 +15,12 @@ class TwoFactorAuthentication
 
         $user = Auth::user();
 
-        if (Auth::check() && $user->google2fa_secret && !$user->is_2fa_authenticated && $request->path() !== '2fa/verify' && $request->path() !== 'logout') {
-            return redirect()->route('2fa.verify');
+        if ($user->google2fa_secret && !$request->session()->get('2fa_authenticated', false)) {
+            if (!$request->is('2fa/verify') && !$request->is('logout')) {
+                return redirect()->route('2fa.verify');
+            }
         }
-
+        
         return $next($request);
     }
 }
