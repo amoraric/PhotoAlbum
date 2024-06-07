@@ -13,57 +13,66 @@ use phpseclib3\Crypt\PublicKeyLoader;
 use Illuminate\Support\Facades\Storage;
 use phpseclib3\Crypt\AES;
 use Illuminate\Support\Facades\File;
+use phpseclib3\Crypt\RSA;
 
 class AlbumController extends Controller
 {
 
 
     public function index()
-    {
-        $userId = Auth::id(); // Get the currently authenticated user's ID
-        $albums = Album::where('user_id', $userId)->with('photos')->get(); // Fetch albums belonging to the user
-        // Decrypt the photos in each album
-        foreach ($albums as $album) {
-            foreach ($album->photos as $photo) {
-                // Skip decryption if the photo doesn't have encrypted data
-                if (!$photo->encrypted_key || !$photo->encrypted_iv) {
-                    continue;
-                }
+{
+    $userId = Auth::id(); // Get the currently authenticated user's ID
+    $albums = Album::where('user_id', $userId)->with('photos')->get(); // Fetch albums belonging to the user
 
-                // Load the user's private key
-                $privateKeyPath = storage_path('app/keys/' . $album->user->email . '.pem');
-                $privateKeyContent = file_get_contents($privateKeyPath);
-                $privateKey = PublicKeyLoader::load($privateKeyContent);
+    foreach ($albums as $album) {
+        foreach ($album->photos as $photo) {
+            if (!$photo->encrypted_key || !$photo->encrypted_iv) {
+                continue;
+            }
 
-                // Decrypt the AES key and IV
-                $aesKey = $privateKey->decrypt(base64_decode($photo->encrypted_key));
-                $aesIv = $privateKey->decrypt(base64_decode($photo->encrypted_iv));
+            // Load the user's private key
+            $privateKeyPath = storage_path('app/keys/' . $album->user->email . '.pem');
+            $privateKeyContent = file_get_contents($privateKeyPath);
+            $privateKey = PublicKeyLoader::loadPrivateKey($privateKeyContent);
 
-                // Decrypt the photo content using AES
-                $path = storage_path('app/public/' . $photo->filename);
-                $encryptedContent = file_get_contents($path);
+            // Decrypt the AES key and IV
+            $aesKey = $privateKey->decrypt(base64_decode($photo->encrypted_key));
+            $aesIv = $privateKey->decrypt(base64_decode($photo->encrypted_iv));
 
-                if (!File::exists(storage_path('app/public/temp'))) {
-                    File::makeDirectory(storage_path('app/public/temp'), 0755, true);
-          }
+            // Decrypt the photo content using AES
+            $path = storage_path('app/public/' . $photo->filename);
+            $encryptedContent = file_get_contents($path);
+            $photoContent = file_get_contents($path); // Correctly load the photo content for signature verification
 
+            // Load the user's public signing key
+            $publicKey = PublicKeyLoader::load($album->user->public_key_sign);
 
+            // Verify the signature
+            $rsa = PublicKeyLoader::load($publicKey);
+            $isSignatureValid = $rsa->verify($photoContent, base64_decode($photo->signature));
+
+            if ($isSignatureValid) {
                 $aes = new AES('cbc');
                 $aes->setKey($aesKey);
                 $aes->setIV($aesIv);
                 $decryptedContent = $aes->decrypt($encryptedContent);
 
-                // Save the decrypted content temporarily
-                $tempPath = 'temp/' . basename($photo->filename);
-                file_put_contents(storage_path('app/public/' . $tempPath), $decryptedContent);
+                if (!File::exists(storage_path('app/public/temp'))) {
+                    File::makeDirectory(storage_path('app/public/temp'), 0755, true);
+                }
+                $tempPath = storage_path('app/public/temp/' . basename($photo->filename));
+                file_put_contents($tempPath, $decryptedContent);
 
-                // Update the photo's temp_path
-                $photo->temp_path = $tempPath;
+                $photo->temp_path = 'temp/' . basename($photo->filename);
+            } else {
+                // Handle invalid signature
+                $photo->temp_path = null; // or some indication that the signature is invalid
             }
         }
-
-        return view('gallery', ['albums' => $albums]);
     }
+
+    return view('gallery', ['albums' => $albums]);
+}
 
     public function store(Request $request)
     {
@@ -91,6 +100,8 @@ class AlbumController extends Controller
 
     // Decrypt the photos in each shared album
     foreach ($sharedAlbums as $album) {
+        $recipient = Auth::user();
+        $publicKey = PublicKeyLoader::load($album->user->public_key_sign);
         foreach ($album->photos as $photo) {
             $path = storage_path('app/public/' . $photo->filename);
             $encryptedContent = file_get_contents($path);
@@ -104,16 +115,26 @@ class AlbumController extends Controller
             $aesIv = $privateKey->decrypt(base64_decode($photo->encrypted_iv));
 
             // Decrypt the photo content using AES
+
+
+            // Save the decrypted content temporarily
+            $rsa = PublicKeyLoader::load($publicKey);
+            $isSignatureValid = $rsa->verify($encryptedContent, base64_decode($photo->signature));
+
+            if ($isSignatureValid) {
             $aes = new AES('cbc');
             $aes->setKey($aesKey);
             $aes->setIV($aesIv);
             $decryptedContent = $aes->decrypt($encryptedContent);
-
             // Save the decrypted content temporarily
+            if (!File::exists(storage_path('app/public/temp'))) {
+                File::makeDirectory(storage_path('app/public/temp'), 0755, true);
+            }
             $tempPath = storage_path('app/public/temp/' . basename($photo->filename));
             file_put_contents($tempPath, $decryptedContent);
 
-            $photo->temp_path = 'temp/' . basename($photo->filename); // Update the photo with the temporary path
+            $photo->temp_path = 'temp/' . basename($photo->filename);
+        }
         }
     }
 

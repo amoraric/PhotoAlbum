@@ -116,12 +116,15 @@ class RegisterController extends Controller
 
     if ($valid) {
         $data = $request->session()->get('user_data');
-        $keyPair = User::generateKeyPair();
+        $EncKeyPair = User::generateKeyPair();
+        $SignKeyPair = User::generateKeyPair();
 
         // Define the directory and file name for the private key
         $privateKeyDir = storage_path('app/keys');
-        $privateKeyFileName = ''.$data['email'] . '.pem';
-        $privateKeyPath = $privateKeyDir . '/' . $privateKeyFileName;
+        $EncprivateKeyFileName = ''.$data['email'] . '.pem';
+        $SignprivateKeyFileName = ''.$data['email'] . '.sign.pem';
+        $EncprivateKeyPath = $privateKeyDir . '/' . $EncprivateKeyFileName;
+        $SignprivateKeyPath = $privateKeyDir . '/' . $SignprivateKeyFileName;
 
         // Ensure the directory exists
         if (!file_exists($privateKeyDir)) {
@@ -129,17 +132,20 @@ class RegisterController extends Controller
         }
 
         // Store the private key in a file
-        file_put_contents($privateKeyPath, $keyPair['private_key']);
+        file_put_contents($EncprivateKeyPath, $EncKeyPair['private_key']);
+        file_put_contents($SignprivateKeyPath, $SignKeyPair['private_key']);
 
         // Ensure the file has the correct permissions
-        chmod($privateKeyPath, 0600);
+        chmod($EncprivateKeyPath, 0600);
+        chmod($SignprivateKeyPath, 0600);
 
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'google2fa_secret' => $secret,
-            'public_key' => $keyPair['public_key'],  // Store public key in the database
+            'public_key_enc' => $EncKeyPair['public_key'],
+            'public_key_sign' => $SignKeyPair['public_key']  // Store public key in the database
         ]);
 
         $user->is_2fa_authenticated = true; // Set 2FA authenticated flag

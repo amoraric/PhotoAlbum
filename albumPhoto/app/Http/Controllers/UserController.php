@@ -20,7 +20,6 @@ class UserController extends Controller
             $user->email,
             $user->google2fa_secret
         );
-
         return view('2fa.enable', ['qrCodeUrl' => $qrCodeUrl, 'secret' => $user->google2fa_secret]);
     }
 

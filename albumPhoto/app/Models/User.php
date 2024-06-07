@@ -23,7 +23,8 @@ class User extends Authenticatable
         'email',
         'password',
         'google2fa_secret',
-        'public_key',
+        'public_key_enc',
+        'public_key_sign'
     ];
 
     /**

@@ -10,7 +10,7 @@
                 <div class="row">
                     @foreach($album->photos as $photo)
                         <div class="col-md-4">
-                            <img src="{{ asset('storage/' . $photo->temp_path) }}" alt="{{ $photo->name }}" class="img-thumbnail" data-bs-toggle="modal" data-bs-target="#imageModal" onclick="showImage('{{ asset('storage/' . $photo->path) }}')">
+                            <img src="{{ asset('storage/' . $photo->temp_path) }}" alt="{{ $photo->name }}" class="img-thumbnail" data-bs-toggle="modal" data-bs-target="#imageModal" onclick="showImage('{{ asset('storage/' . $photo->temp_path) }}')">
                         </div>
                     @endforeach
                 </div>
