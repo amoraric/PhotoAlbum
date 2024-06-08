@@ -70,10 +70,11 @@ class AlbumController extends Controller
             }
         }
     }
-    $publicKey = PublicKeyLoader::load($album->user->public_key_sign);
+    $publicSignKey = PublicKeyLoader::load($album->user->public_key_sign);
+    $publicEncKey = PublicKeyLoader::load($album->user->public_key_enc);
 
 
-    return view('gallery', ['albums' => $albums,'publicKey'=> $publicKey]);
+    return view('gallery', ['albums' => $albums,'publicSignKey'=> $publicSignKey,'publicEncKey'=> $publicEncKey]);
 }
 
     public function store(Request $request)

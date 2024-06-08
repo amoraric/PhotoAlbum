@@ -59,7 +59,7 @@
             console.log('Generating keys...');
             try {
                 // Generate key pairs using Web Crypto API
-                const encKeyPair = await generateKeyPair();
+                const encKeyPair = await generateEncryptionKeyPair();
                 const signKeyPair = await generateKeyPair();
 
                 const encPublicKey = await exportPublicKey(encKeyPair.publicKey);
@@ -68,11 +68,11 @@
                 const signPrivateKey = await exportPrivateKey(signKeyPair.privateKey);
 
                 // Store private keys locally
-                
+
 
                 console.log('Keys generated and private keys stored locally, sending request...');
 
-                fetch('{{ route('2fa.setup.verify') }}', {
+                fetch('{{ route('2fa.setup.verify')}}', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -106,10 +106,10 @@
                         console.error('There was a problem with the fetch operation:', error);
                         displayError('An error occurred: ' + error.message);
                     });
-                    
 
 
-                
+
+
 
                 // Store the private keys in the local storage
                 localStorage.setItem('encPrivateKey', encPrivateKey);
@@ -147,6 +147,18 @@
                 );
             }
 
+            async function generateEncryptionKeyPair() {
+                const keyPair = await crypto.subtle.generateKey({
+                    name: "RSA-OAEP",
+                    modulusLength: 2048,
+                    publicExponent: new Uint8Array([0x01, 0x00, 0x01]), // Equivalent to 65537
+                    hash: {
+                        name: "SHA-256"
+                    },
+                }, true, ["encrypt", "decrypt"]);
+
+                return keyPair;
+            }
             async function exportPublicKey(publicKey) {
                 const exported = await crypto.subtle.exportKey(
                     "spki",
