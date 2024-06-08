@@ -15,6 +15,7 @@
   </div>
   <div>
     @yield('content')
+    
   </div>
   @include('partials.share_popup')
  <script>
