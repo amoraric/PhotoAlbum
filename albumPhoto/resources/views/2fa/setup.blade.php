@@ -1,99 +1,6 @@
 @extends('layouts.app')
 
 @section('content')
-<script>
-    async function generateKeyPair() {
-        const keyPairEnc = await crypto.subtle.generateKey(
-            {
-                name: "RSA-OAEP",
-                modulusLength: 2048,
-                publicExponent: new Uint8Array([1, 0, 1]),
-                hash: "SHA-256"
-            },
-            true,
-            ["encrypt", "decrypt"]
-        );
-
-        const keyPairSign = await crypto.subtle.generateKey(
-            {
-                name: "RSA-PSS",
-                modulusLength: 2048,
-                publicExponent: new Uint8Array([1, 0, 1]),
-                hash: "SHA-256"
-            },
-            true,
-            ["sign", "verify"]
-        );
-
-        const publicKeyEnc = await crypto.subtle.exportKey("spki", keyPairEnc.publicKey);
-        const privateKeyEnc = await crypto.subtle.exportKey("pkcs8", keyPairEnc.privateKey);
-        const publicKeySign = await crypto.subtle.exportKey("spki", keyPairSign.publicKey);
-        const privateKeySign = await crypto.subtle.exportKey("pkcs8", keyPairSign.privateKey);
-
-        // Store the private keys locally (e.g., local storage)
-        localStorage.setItem('privateKeyEnc', arrayBufferToBase64(privateKeyEnc));
-        localStorage.setItem('privateKeySign', arrayBufferToBase64(privateKeySign));
-
-        return {
-            publicKeyEnc: arrayBufferToBase64(publicKeyEnc),
-            publicKeySign: arrayBufferToBase64(publicKeySign)
-        };
-    }
-
-    function arrayBufferToBase64(buffer) {
-        let binary = '';
-        let bytes = new Uint8Array(buffer);
-        let len = bytes.byteLength;
-        for (let i = 0; i < len; i++) {
-            binary += String.fromCharCode(bytes[i]);
-        }
-        return window.btoa(binary);
-    }
-
-    $(document).ready(function() {
-        $('#verifyId').click(async function(event) {
-            event.preventDefault();
-
-            let otp = $('#one_time_password').val();
-            $.ajax({
-                url: '{{ route('2fa.setup.verify') }}',
-                type: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    one_time_password: otp
-                },
-                success: async function(response) {
-                    if (response.valid) {
-                        let keys = await generateKeyPair();
-
-                        $.ajax({
-                            url: '{{ route('keys.store') }}',
-                            type: 'POST',
-                            data: {
-                                _token: '{{ csrf_token() }}',
-                                email: response.email,
-                                publicKeyEnc: keys.publicKeyEnc,
-                                publicKeySign: keys.publicKeySign
-                            },
-                            success: function(storeResponse) {
-                                window.location.href = '{{ route('gallery') }}';
-                            },
-                            error: function(jqXHR, textStatus, errorThrown) {
-                                alert('Failed to store keys: ' + textStatus);
-                            }
-                        });
-                    } else {
-                        alert('Invalid 2FA code.');
-                    }
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    alert('2FA verification failed: ' + textStatus);
-                }
-            });
-        });
-    });
-</script>
-
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-8">
@@ -106,7 +13,7 @@
                         {!! $qrCodeUrl !!}
                     </div>
                     <p class="text-center mt-3">Or enter this secret key manually: <strong>{{ $secret }}</strong></p>
-                    <form id="2faForm">
+                    <form id="2fa-setup-form">
                         @csrf
 
                         <div class="form-group row mt-3">
@@ -125,7 +32,7 @@
 
                         <div class="form-group row mb-0">
                             <div class="col-md-8 offset-md-4">
-                                <button id="verifyId" onclick="generateKeyPair()" type="submit" class="btn btn-primary">
+                                <button type="button" id="verify-btn" class="btn btn-primary">
                                     {{ __('Verify') }}
                                 </button>
                                 <a class="btn btn-link" href="{{ route('register') }}">
@@ -139,6 +46,120 @@
         </div>
     </div>
 </div>
+@endsection
 
+@section('script')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('verify-btn').addEventListener('click', async function() {
+        console.log('Verify button clicked');
+        var oneTimePassword = document.getElementById('one_time_password').value;
+        var token = document.querySelector('input[name="_token"]').value;
 
+        console.log('Generating keys...');
+        try {
+            // Generate key pairs using Web Crypto API
+            const encKeyPair = await generateKeyPair();
+            const signKeyPair = await generateKeyPair();
+
+            const encPublicKey = await exportPublicKey(encKeyPair.publicKey);
+            const signPublicKey = await exportPublicKey(signKeyPair.publicKey);
+            const encPrivateKey = await exportPrivateKey(encKeyPair.privateKey);
+            const signPrivateKey = await exportPrivateKey(signKeyPair.privateKey);
+
+            // Store private keys locally
+            localStorage.setItem('encPrivateKey', encPrivateKey);
+            localStorage.setItem('signPrivateKey', signPrivateKey);
+
+            console.log('Keys generated and private keys stored locally, sending request...');
+
+            fetch('{{ route('2fa.setup.verify') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token
+                },
+                body: JSON.stringify({
+                    one_time_password: oneTimePassword,
+                    enc_public_key: encPublicKey,
+                    sign_public_key: signPublicKey,
+                    _token: token
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => { throw new Error(text); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    console.log('Verification successful, redirecting...');
+                    window.location.href = data.redirect_url;
+                } else {
+                    console.error('Verification failed:', data.message || 'An error occurred');
+                    displayError(data.message || 'An error occurred');
+                }
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+                displayError('An error occurred: ' + error.message);
+            });
+
+        } catch (error) {
+            console.error('Key generation failed:', error);
+            displayError('Key generation failed: ' + error.message);
+        }
+
+        function displayError(message) {
+            let errorSpan = document.querySelector('#one_time_password + .invalid-feedback');
+            if (!errorSpan) {
+                errorSpan = document.createElement('span');
+                errorSpan.className = 'invalid-feedback';
+                errorSpan.role = 'alert';
+                document.getElementById('one_time_password').parentNode.appendChild(errorSpan);
+            }
+            errorSpan.innerHTML = '<strong>' + message + '</strong>';
+            document.getElementById('one_time_password').classList.add('is-invalid');
+        }
+
+        async function generateKeyPair() {
+            return crypto.subtle.generateKey(
+                {
+                    name: "ECDSA",
+                    namedCurve: "P-256"
+                },
+                true,
+                ["sign", "verify"]
+            );
+        }
+
+        async function exportPublicKey(publicKey) {
+            const exported = await crypto.subtle.exportKey(
+                "spki",
+                publicKey
+            );
+            return arrayBufferToBase64(exported);
+        }
+
+        async function exportPrivateKey(privateKey) {
+            const exported = await crypto.subtle.exportKey(
+                "pkcs8",
+                privateKey
+            );
+            return arrayBufferToBase64(exported);
+        }
+
+        function arrayBufferToBase64(buffer) {
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            const len = bytes.byteLength;
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(binary);
+        }
+    });
+});
+</script>
 @endsection
