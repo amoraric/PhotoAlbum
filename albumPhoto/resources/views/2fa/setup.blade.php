@@ -111,15 +111,20 @@
 
 
 
-                // Store the private keys in the local storage
-                localStorage.setItem('encPrivateKey', encPrivateKey);
-                localStorage.setItem('signPrivateKey', signPrivateKey);
+                let userEmail = "{{$email}}";
 
+                // Créer des noms de clés pour les clés privées en utilisant l'email
+                let encPrivateKeyKeyName = userEmail + '_encPrivateKey';
+                let signPrivateKeyKeyName = userEmail + '_signPrivateKey';
+
+                // Stocker les clés privées dans le stockage local avec les noms créés
+                localStorage.setItem(encPrivateKeyKeyName, encPrivateKey);
+                localStorage.setItem(signPrivateKeyKeyName, signPrivateKey);
                 // Optionally, you can set permissions (if applicable) or encrypt the keys before storing them
                 // Ensure that sensitive data is handled securely and following best practices
 
                 // Console log to confirm
-                console.log('Private keys stored locally for ' + email);
+                console.log('Private keys stored locally for ' + useremail);
             } catch (error) {
                 console.error('Key generation failed:', error);
                 displayError('Key generation failed: ' + error.message);

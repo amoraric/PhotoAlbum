@@ -46,6 +46,8 @@ $photo->photo_name = $request->photo_name;
 $photo->path = $path;
 $photo->encrypted_key = $request->encrypted_key; // Stocker la clé AES chiffrée
 $photo->encrypted_iv = $request->encrypted_iv; // Stocker l'IV chiffré
+$photo->signature = $request->signature;
+
 $photo->save();
 }
 

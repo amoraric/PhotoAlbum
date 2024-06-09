@@ -30,7 +30,7 @@ class AlbumController extends Controller
                 continue;
             }
 
-            // Load the user's private key
+            /* Load the user's private key
             $privateKeyPath = storage_path('app/keys/' . $album->user->email . '.pem');
             $privateKeyContent = file_get_contents($privateKeyPath);
             $privateKey = PublicKeyLoader::loadPrivateKey($privateKeyContent);
@@ -67,9 +67,10 @@ class AlbumController extends Controller
             } else {
                 // Handle invalid signature
                 $photo->temp_path = null; // or some indication that the signature is invalid
-            }
+            }*/
         }
     }
+    
     $publicSignKey = PublicKeyLoader::load($album->user->public_key_sign);
     $publicEncKey = PublicKeyLoader::load($album->user->public_key_enc);
 

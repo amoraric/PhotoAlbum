@@ -104,6 +104,9 @@ class LoginController extends Controller
     {
         if ($user->google2fa_secret && !$request->session()->get('2fa_authenticated', false)) {
             $request->session()->put('2fa_authenticated', false);
+            if (!$request->session()->has('mail')) {
+                $request->session()->put('email', $user->email); // Stocker l'email dans la session
+            }
             return redirect()->route('2fa.verify');
         }
 

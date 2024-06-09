@@ -113,7 +113,7 @@ class RegisterController extends Controller
             $secret
         );
 
-        return view('2fa.setup', ['qrCodeUrl' => $qrCodeUrl, 'secret' => $secret]);
+        return view('2fa.setup', ['qrCodeUrl' => $qrCodeUrl, 'email'=> $data['email'],'secret' => $secret]);
     }
 
     public function verify2FA(Request $request)
@@ -147,7 +147,9 @@ class RegisterController extends Controller
 
                 $request->session()->forget(['user_data', 'google2fa_secret']);
                 $this->guard()->login($user);
+                $request->session()->put('email', $user->email);
 
+            
                 Album::insertAlbum('gallery', $user->id);
 
                 return response()->json(['success' => true, 'redirect_url' => $this->redirectPath()]);
