@@ -147,16 +147,15 @@ $photo->save();
         $photo = Photo::findOrFail($id);
 
         $encryptedContent = file_get_contents(storage_path('app/public/' . $photo->filename));
-        // Assuming encrypted_key, encrypted_iv, and signature are stored directly in the database and are already base64 encoded
-        $encryptedKey = base64_decode($photo->encrypted_key);
-        $encryptedIv = base64_decode($photo->encrypted_iv);
-        $signature = base64_decode($photo->signature);
+        $encryptedKey = $photo->encrypted_key;
+        $encryptedIv = $photo->encrypted_iv;
+        $signature = $photo->signature;
 
         return response()->json([
             'encryptedContent' => base64_encode($encryptedContent),
-            'encryptedSymmetricKey' => base64_encode($encryptedKey),
-            'encryptedIv' => base64_encode($encryptedIv),
-            'signature' => base64_encode($signature),
+            'encryptedKey' => $encryptedKey,
+            'encryptedIv' => $encryptedIv,
+            'signature' => $signature
         ]);
     }
 }

@@ -7,10 +7,13 @@
 
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
-        <!-- User Email -->
-        @auth
-        <meta name="user-email" content="{{ Auth::user()->email }}">
-        @endauth
+    <!-- User Email -->
+    @auth
+    <meta name="user-email" content="{{ Auth::user()->email }}">
+    <meta name="public-key-enc" content="{{ Auth::user()->public_key_enc }}">
+    <meta name="public-key-sign" content="{{ Auth::user()->public_key_sign }}">
+    @endauth
+
     <title>{{ config('app.name', 'Photo Album') }}</title>
 
     <!-- Fonts -->
