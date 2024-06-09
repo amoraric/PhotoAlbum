@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('#photoForm').addEventListener('submit', async function(event) {
         event.preventDefault();
@@ -61,7 +62,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, publicKey, aesIv);
                 console.log('AES IV encrypted with public key successfully');
 
-                const userEmail = "user5@gmail.com";
+                const userEmail = document.querySelector('meta[name="user-email"]').getAttribute('content');
+                if (!userEmail) {
+                throw new Error('User email not found');
+                }
+                console.log(userEmail);
                 const signPrivateKeyKeyName = userEmail + '_signPrivateKey';
                 const signPrivateKey = localStorage.getItem(signPrivateKeyKeyName);
 
@@ -95,9 +100,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append('photo', new Blob([encryptedContent]), photoFile.name);
                 formData.append('album_id', albumId);
                 formData.append('photo_name', photoName);
-                formData.append('encrypted_key', new Blob([encryptedKey]));
-                formData.append('encrypted_iv', new Blob([encryptedIv]));
-                formData.append('signature', new Blob([signature]));
+                formData.append('encrypted_key', btoa(String.fromCharCode.apply(null, new Uint8Array(encryptedKey))));
+                console.log(btoa(String.fromCharCode.apply(null, new Uint8Array(encryptedKey))));
+                formData.append('encrypted_iv', btoa(String.fromCharCode.apply(null, encryptedIv)));
+                console.log(btoa(String.fromCharCode.apply(null, encryptedIv)));
+                formData.append('signature', btoa(String.fromCharCode.apply(null, new Uint8Array(signature))));
+                console.log(btoa(String.fromCharCode.apply(null, new Uint8Array(signature))));
 
                 const response = await fetch(storeUrl, {
                     method: 'POST',

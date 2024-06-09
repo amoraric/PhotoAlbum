@@ -8,19 +8,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const data = await response.json();
-            const { encryptedContent, encryptedKey: encryptedSymmetricKey, encryptedIv, signature } = data;
+            const { encryptedContent, encryptedSymmetricKey, encryptedIv, signature } = data;
             console.log('Data received from server:', data);
 
             if (!encryptedContent || !encryptedSymmetricKey || !encryptedIv || !signature) {
                 throw new Error('Missing encrypted data components');
             }
 
-            console.log('Encrypted Content:', encryptedContent);
-            console.log('Encrypted Key:', encryptedSymmetricKey);
-            console.log('Encrypted IV:', encryptedIv);
-            console.log('Signature:', signature);
+            const userEmail = document.querySelector('meta[name="user-email"]').getAttribute('content');
+            if (!userEmail) {
+                throw new Error('User email not found');
+            }
 
-            const userEmail = "user5@gmail.com";  // Replace with dynamic user email retrieval if needed
             const encPrivateKey = localStorage.getItem(`${userEmail}_encPrivateKey`);
             if (!encPrivateKey) {
                 throw new Error('No private key found in local storage');
@@ -50,16 +49,18 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             console.log('Private key imported successfully');
 
-            //ffff
-            console.log(1);
-            const ourdecryptedSymKey = await crypto.subtle.decrypt(
-                { name: "RSA-OAEP" }, privateKey, encPrivateKeyBuffer);
-                console.log(1);
-            console.log(ourdecryptedSymKey);
-            //gggg
+            // Convert encrypted symmetric key from base64 to ArrayBuffer
+
+
+
+            const encryptedSymmetricKeyArray = Uint8Array.from(atob(encryptedSymmetricKey), c => c.charCodeAt(0));
+            // Decrypt the symmetric key using the private key
+            const decryptedSymKey = await crypto.subtle.decrypt(
+                { name: "AES-CBC" }, privateKey, encryptedSymmetricKeyArray.buffer);
+            console.log('Decrypted symmetric key:', new Uint8Array(decryptedSymKey));
 
             // Decode base64-encoded encrypted data
-            const encryptedKeyBuffer = Uint8Array.from(atob(encryptedSymmetricKey), c => c.charCodeAt(0));
+
             const encryptedIvBuffer = Uint8Array.from(atob(encryptedIv), c => c.charCodeAt(0));
             const encryptedContentBuffer = Uint8Array.from(atob(encryptedContent), c => c.charCodeAt(0));
             const signatureBuffer = Uint8Array.from(atob(signature), c => c.charCodeAt(0));

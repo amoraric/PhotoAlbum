@@ -2,6 +2,7 @@
 
 use PragmaRX\Google2FALaravel\Support\Authenticator;
 use PragmaRX\Google2FALaravel\Google2FA;
+use App\Http\Controllers\Controller;
 
 class UserController extends Controller
 {
@@ -30,5 +31,15 @@ class UserController extends Controller
         $user->save();
 
         return redirect()->route('profile')->with('status', '2FA has been disabled.');
+    }
+    public function getEmail()
+    {
+        // Ensure the user is authenticated
+        if (Auth::check()) {
+            $user = Auth::user();
+            return response()->json(['email' => $user->email]);
+        } else {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
     }
 }

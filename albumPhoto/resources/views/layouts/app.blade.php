@@ -7,7 +7,10 @@
 
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
-
+        <!-- User Email -->
+        @auth
+        <meta name="user-email" content="{{ Auth::user()->email }}">
+        @endauth
     <title>{{ config('app.name', 'Photo Album') }}</title>
 
     <!-- Fonts -->
@@ -28,7 +31,7 @@
 </head>
 
 <body>
-    
+
     <div id="app">
         <nav class="navbar navbar-expand-md navbar-light bg-primary shadow-sm">
             <div class="container">

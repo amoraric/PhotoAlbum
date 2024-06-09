@@ -21,7 +21,7 @@ class PhotoController extends Controller
     public function store(Request $request)
 {
   // Validation des champs
-  
+
 
 // Récupération du fichier photo
 $photoFile = $request->file('photo');
@@ -154,7 +154,7 @@ $photo->save();
 
         return response()->json([
             'encryptedContent' => base64_encode($encryptedContent),
-            'encryptedKey' => base64_encode($encryptedKey),
+            'encryptedSymmetricKey' => base64_encode($encryptedKey),
             'encryptedIv' => base64_encode($encryptedIv),
             'signature' => base64_encode($signature),
         ]);
