@@ -97,7 +97,7 @@
 
     </div>
     <script src="{{ asset('js/decrypt.js') }}"></script>
-
+    <script src="{{ asset('js/encrypt.js') }}"></script>
 </body>
 
 </html>

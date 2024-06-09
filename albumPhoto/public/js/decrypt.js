@@ -1,30 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    function base64ToArrayBuffer(base64) {
-        try {
-            const binaryString = atob(base64);
-            
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            console.log(bytes.buffer);
-            return bytes.buffer;
-        } catch (error) {
-            console.error('Error in base64ToArrayBuffer:', error);
-            return null;
-        }
-    }
-
-    function arrayBufferToBase64(buffer) {
-        let binary = '';
-        const bytes = new Uint8Array(buffer);
-        const len = bytes.byteLength;
-        for (let i = 0; i < len; i++) {
-            binary += String.fromCharCode(bytes[i]);
-        }
-        return window.btoa(binary);
-    }
 
     async function decryptAndShowImage(photoId) {
         try {
@@ -34,36 +8,39 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const data = await response.json();
-            const { encryptedContent, encryptedKey, encryptedIv, signature } = data;
+            const { encryptedContent, encryptedKey: encryptedSymmetricKey, encryptedIv, signature } = data;
             console.log('Data received from server:', data);
 
-            if (!encryptedContent || !encryptedKey || !encryptedIv || !signature) {
+            if (!encryptedContent || !encryptedSymmetricKey || !encryptedIv || !signature) {
                 throw new Error('Missing encrypted data components');
             }
 
-            // ff
+            console.log('Encrypted Content:', encryptedContent);
+            console.log('Encrypted Key:', encryptedSymmetricKey);
+            console.log('Encrypted IV:', encryptedIv);
+            console.log('Signature:', signature);
+
             const userEmail = "user5@gmail.com";  // Replace with dynamic user email retrieval if needed
             const encPrivateKey = localStorage.getItem(`${userEmail}_encPrivateKey`);
             if (!encPrivateKey) {
-                throw new Error('No private key found in local storage OURRR');
+                throw new Error('No private key found in local storage');
             }
 
-            const encPrivateKeyBuffer = base64ToArrayBuffer(encPrivateKey);
+            // Convert the private key from base64 string to ArrayBuffer
+            const encPrivateKeyBuffer = Uint8Array.from(atob(encPrivateKey), c => c.charCodeAt(0));
             if (!encPrivateKeyBuffer) {
-                throw new Error('Failed to convert private key to ArrayBuffer OURRR');
+                throw new Error('Failed to convert private key to ArrayBuffer');
             }
 
             const privateKey = await crypto.subtle.importKey(
                 "pkcs8",
-                encPrivateKeyBuffer, {
+                encPrivateKeyBuffer.buffer, {
                     name: "RSA-OAEP",
                     hash: "SHA-256"
                 },
                 true,
                 ["decrypt"]
             );
-            
-            // /f
 
             console.log('Private key properties:', {
                 type: privateKey.type,
@@ -73,29 +50,57 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             console.log('Private key imported successfully');
 
-            const aesKeyBuffer = await crypto.subtle.decrypt(
-                { name: "RSA-OAEP" },
-                privateKey,
-                base64ToArrayBuffer(encryptedKey)
-            );
-            console.log("PLEASE");
-            console.log(aesKeyBuffer);
-            // /ff
+            //ffff
+            console.log(1);
+            const ourdecryptedSymKey = await crypto.subtle.decrypt(
+                { name: "RSA-OAEP" }, privateKey, encPrivateKeyBuffer);
+                console.log(1);
+            console.log(ourdecryptedSymKey);
+            //gggg
+
+            // Decode base64-encoded encrypted data
+            const encryptedKeyBuffer = Uint8Array.from(atob(encryptedSymmetricKey), c => c.charCodeAt(0));
+            const encryptedIvBuffer = Uint8Array.from(atob(encryptedIv), c => c.charCodeAt(0));
+            const encryptedContentBuffer = Uint8Array.from(atob(encryptedContent), c => c.charCodeAt(0));
+            const signatureBuffer = Uint8Array.from(atob(signature), c => c.charCodeAt(0));
+
+            console.log('Encrypted AES key (Uint8Array):', encryptedKeyBuffer);
+
+            if (encryptedKeyBuffer.length === 0) {
+                throw new Error('Encrypted AES key is empty');
+            }
+
+            // Perform RSA decryption of the AES key
+            let aesKeyBuffer;
+            try {
+                aesKeyBuffer = await crypto.subtle.decrypt(
+                    { name: "RSA-OAEP" },
+                    privateKey,
+                    encryptedKeyBuffer
+                );
+            } catch (e) {
+                console.error('Error during AES key decryption:', e);
+                throw new Error('Failed to decrypt AES key');
+            }
+
             if (!aesKeyBuffer) {
                 throw new Error('Failed to decrypt AES key');
             }
-            
+
             console.log('AES key decrypted successfully');
 
-            const aesIv = base64ToArrayBuffer(encryptedIv);
-            if (!aesIv) {
-                throw new Error('Failed to convert AES IV to ArrayBuffer');
+            // Decrypt the content using the AES key
+            let decryptedContent;
+            try {
+                decryptedContent = await crypto.subtle.decrypt({
+                    name: "AES-CBC",
+                    iv: encryptedIvBuffer
+                }, aesKeyBuffer, encryptedContentBuffer);
+            } catch (e) {
+                console.error('Error during content decryption:', e);
+                throw new Error('Failed to decrypt content');
             }
 
-            const decryptedContent = await crypto.subtle.decrypt({
-                name: "AES-CBC",
-                iv: aesIv
-            }, aesKeyBuffer, base64ToArrayBuffer(encryptedContent));
             if (!decryptedContent) {
                 throw new Error('Failed to decrypt content');
             }
@@ -120,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     hash: { name: "SHA-256" }
                 },
                 publicKey,
-                base64ToArrayBuffer(signature),
+                signatureBuffer,
                 decryptedContent
             );
 
@@ -162,164 +167,4 @@ document.addEventListener('DOMContentLoaded', function() {
         const photoId = img.getAttribute('data-photo-id');
         decryptAndShowImage(photoId);
     });
-
-    document.querySelector('#photoForm').addEventListener('submit', async function(event) {
-        event.preventDefault();
-
-        const photoFile = document.querySelector('#photoFile').files[0];
-        const albumId = document.querySelector('#albumSelect').value;
-        const photoName = document.querySelector('#photoName').value;
-        const storeUrl = document.querySelector('#photoForm').getAttribute('data-store-url');
-        const publicKeyPem = document.querySelector('#photoForm').getAttribute('data-public-enc-key');
-
-        if (!photoFile || !albumId || !photoName) {
-            alert("All fields are required.");
-            return;
-        }
-        console.log("pre");
-
-        const reader = new FileReader();
-        reader.onload = async function(e) {
-            const photoContent = e.target.result;
-            console.log(1);
-
-            const aesKey = await crypto.subtle.generateKey({
-                    name: "AES-CBC",
-                    length: 256
-                },
-                true,
-                ["encrypt", "decrypt"]
-            );
-            const aesIv = crypto.getRandomValues(new Uint8Array(16));
-
-            const encryptedContent = await crypto.subtle.encrypt({
-                    name: "AES-CBC",
-                    iv: aesIv
-                },
-                aesKey,
-                photoContent
-            );
-            console.log(2);
-
-            const rawAesKey = await crypto.subtle.exportKey("raw", aesKey);
-            const rawAesIv = aesIv.buffer;
-            console.log(3);
-
-            const publicKey = await crypto.subtle.importKey(
-                "spki",
-                pemToArrayBuffer(publicKeyPem), {
-                    name: "RSA-OAEP",
-                    hash: {
-                        name: "SHA-256"
-                    }
-                },
-                true,
-                ["encrypt"]
-            );
-
-            console.log(5);
-
-            const encryptedKey = await crypto.subtle.encrypt({
-                    name: "RSA-OAEP"
-                },
-                publicKey,
-                rawAesKey
-            );
-
-            // debut
-            const ouruserEmail = "user5@gmail.com";  // Replace with dynamic user email retrieval if needed
-            const ourencPrivateKey = localStorage.getItem(`${ouruserEmail}_encPrivateKey`);
-            if (!ourencPrivateKey) {
-                throw new Error('No private key found in local storage OURRR');
-            }
-
-            const ourencPrivateKeyBuffer = base64ToArrayBuffer(ourencPrivateKey);
-            if (!ourencPrivateKeyBuffer) {
-                throw new Error('Failed to convert private key to ArrayBuffer OURRR');
-            }
-
-            const ourprivateKey = await crypto.subtle.importKey(
-                "pkcs8",
-                ourencPrivateKeyBuffer, {
-                    name: "RSA-OAEP",
-                    hash: "SHA-256"
-                },
-                true,
-                ["decrypt"]
-            );
-            // fin
-
-            const encrypted_iv = await crypto.subtle.encrypt({
-                    name: "RSA-OAEP"
-                },
-                publicKey,
-                rawAesIv
-            );
-            console.log(6);
-            console.log("le form:");
-            console.log('album_id =' + albumId);
-            console.log('photo_name' + photoName);
-
-            const userEmail = "user5@gmail.com"; 
-            const signPrivateKeyKeyName = userEmail + '_signPrivateKey';
-            console.log("private = " + signPrivateKeyKeyName);
-            const signPrivateKey = localStorage.getItem(signPrivateKeyKeyName);
-            console.log(signPrivateKey);
-
-            const privateKeyBuffer = base64ToArrayBuffer(signPrivateKey);
-
-            const privateKeyImported = await crypto.subtle.importKey(
-                "pkcs8", 
-                privateKeyBuffer, {
-                    name: "ECDSA",
-                    namedCurve: "P-256"
-                },
-                true,
-                ["sign"]
-            );
-
-            const signature = await crypto.subtle.sign({
-                    name: "ECDSA",
-                    hash: {
-                        name: "SHA-256"
-                    }
-                },
-                privateKeyImported,
-                encryptedContent
-            );
-
-            const formData = new FormData();
-            formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-            formData.append('photo', new Blob([encryptedContent]), photoFile.name);
-            formData.append('album_id', albumId);
-            formData.append('photo_name', photoName);
-            formData.append('encrypted_key', arrayBufferToBase64(encryptedKey));
-            formData.append('encrypted_iv', arrayBufferToBase64(encrypted_iv));
-            formData.append('signature', arrayBufferToBase64(signature));
-
-            console.log(7);
-
-            const response = await fetch(storeUrl, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                alert('Photo uploaded successfully!');
-            } else {
-                console.log("fail");
-                alert('Failed to upload photo');
-            }
-            console.log(8);
-        };
-        console.log(9);
-
-        reader.readAsArrayBuffer(photoFile);
-        console.log(10);
-
-    });
-    console.log(11);
 });
