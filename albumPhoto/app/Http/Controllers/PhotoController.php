@@ -51,73 +51,47 @@ $photo->signature = $request->signature;
 $photo->save();
 }
 
+    public function getEncryptedKeys(Photo $photo)
+    {
+        $owner = Auth::user();
 
-// public function share(Request $request, Photo $photo)
-//     {
-//         $request->validate([
-//             'shareWith' => 'required|email'
-//         ]);
+        if ($photo->owner_id !== $owner->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
-//         $owner = Auth::user();
-//         $recipient = User::where('email', $request->shareWith)->first();
+        return response()->json([
+            'encryptedKey' => $photo->encrypted_key,
+            'encryptedIv' => $photo->encrypted_iv
+        ]);
+    }
 
-//         if ($recipient) {
-//             // Load the owner's private key to decrypt the AES key and IV
-//             $ownerPrivateKeyPath = storage_path('app/keys/' . $owner->email . '.pem');
-//             $ownerPrivateKeyContent = file_get_contents($ownerPrivateKeyPath);
-//             $ownerPrivateKey = PublicKeyLoader::loadPrivateKey($ownerPrivateKeyContent);
-
-//             // Decrypt the AES key and IV
-//             $encryptedKey = base64_decode($photo->encrypted_key);
-//             $encryptedIv = base64_decode($photo->encrypted_iv);
-//             $aesKey = $ownerPrivateKey->decrypt($encryptedKey);
-//             $aesIv = $ownerPrivateKey->decrypt($encryptedIv);
-
-//             // Load the recipient's public key to re-encrypt the AES key and IV
-//             $recipientPublicKey = PublicKeyLoader::load($recipient->public_key_enc);
-
-//             // Encrypt the AES key and IV with the recipient's public key
-//             $newEncryptedKey = $recipientPublicKey->encrypt($aesKey);
-//             $newEncryptedIv = $recipientPublicKey->encrypt($aesIv);
-
-//             // Store the shared photo metadata
-//             $photoShared = new PhotoShared;
-//             $photoShared->owner_id = $owner->id;
-//             $photoShared->photo_id = $photo->id;
-//             $photoShared->shared_user_id = $recipient->id;
-//             $photoShared->sharedEncrypted_key = base64_encode($newEncryptedKey);
-//             $photoShared->sharedEncrypted_iv = base64_encode($newEncryptedIv);
-//             $photoShared->save();
-
-//             return redirect()->route('gallery')->with('success', 'Photo shared successfully!');
-//         } else {
-//             return redirect()->route('gallery')->with('error', 'User not found.');
-//         }
-//     }
 
     public function share(Request $request, Photo $photo)
     {
         $request->validate([
             'shareWith' => 'required|email'
         ]);
-        $owner = Auth::id();
-        $user = User::where('email', $request->shareWith)->first();
-        $symmetric_key = $request->symmetric_key;
-        $symmetric_iv = $request->symmetric_iv;
-        if ($user) {
-            PhotoShared::addPhotoShared([
-                'owner_id' => $owner,
-                'photo_id' => $photo->id,
-                'shared_user_id' => $user->id,
-                'symmetric_key' => $symmetric_key,
-                'symmetric_iv' => $symmetric_iv
-            ]);
 
-            return redirect()->route('gallery')->with('success', 'Photo shared successfully!');
+        $owner = Auth::user();
+        $user = User::where('email', $request->shareWith)->first();
+        $symmetricKey = $request->input('symmetric_key');
+        $symmetricIv = $request->input('symmetric_iv');
+
+        if ($user) {
+            PhotoShared::addPhotoShared(
+                $owner->id,
+                $photo->id,
+                $user->id,
+                $symmetricKey,
+                $symmetricIv
+            );
+
+            return response()->json(['message' => 'Photo shared successfully!'], 200);
         } else {
-            return redirect()->route('gallery')->with('error', 'User not found.');
+            return response()->json(['message' => 'User not found.'], 404);
         }
     }
+
 
     public function sharedPhotos()
 {
