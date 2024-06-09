@@ -52,53 +52,65 @@ $photo->save();
 }
 
     public function getEncryptedKeys(Photo $photo)
-    {
-        $owner = Auth::user();
+{
+    $owner = Auth::user();
 
-        if ($photo->owner_id !== $owner->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        return response()->json([
-            'encryptedKey' => $photo->encrypted_key,
-            'encryptedIv' => $photo->encrypted_iv
-        ]);
+    if ($photo->owner_id !== $owner->id) {
+        return response()->json(['message' => 'Unauthorized'], 403);
     }
 
+    return response()->json([
+        'encryptedKey' => $photo->encrypted_key,
+        'encryptedIv' => $photo->encrypted_iv
+    ]);
+}
 
-    public function share(Request $request, Photo $photo)
-    {
-        $request->validate([
-            'shareWith' => 'required|email'
-        ]);
-
-        $owner = Auth::user();
-        $user = User::where('email', $request->shareWith)->first();
-        $symmetricKey = $request->input('symmetric_key');
-        $symmetricIv = $request->input('symmetric_iv');
-
-        if ($user) {
-            PhotoShared::addPhotoShared(
-                $owner->id,
-                $photo->id,
-                $user->id,
-                $symmetricKey,
-                $symmetricIv
-            );
-
-            return response()->json(['message' => 'Photo shared successfully!'], 200);
-        } else {
-            return response()->json(['message' => 'User not found.'], 404);
-        }
+public function getPublicUserKey($email)
+{
+    $user = User::where('email', $email)->first();
+    if ($user) {
+        return response()->json(['publicKey' => $user->public_key_enc]);
+    } else {
+        return response()->json(['message' => 'User not found'], 404);
     }
+}
+
+public function share(Request $request, Photo $photo)
+{
+    $request->validate([
+        'shareWith' => 'required|email'
+    ]);
+
+    $owner = Auth::user();
+    $user = User::where('email', $request->shareWith)->first();
+    $symmetricKey = $request->input('symmetric_key');
+    $symmetricIv = $request->input('symmetric_iv');
+
+    if ($user) {
+        PhotoShared::addPhotoShared(
+            $owner->id,
+            $photo->id,
+            $user->id,
+            $symmetricKey,
+            $symmetricIv
+        );
+
+        return redirect()->route('gallery')->with('success', 'Photo shared successfully!');
+    } else {
+        return redirect()->route('gallery')->with('error', 'User not found.');
+    }
+}
+
 
 
     public function sharedPhotos()
 {
     $userId = Auth::id();
+
+    // Join the photos and photo_shared tables to get the necessary fields
     $sharedImages = Photo::join('photo_shared', 'photos.id', '=', 'photo_shared.photo_id')
-        ->where('photo_shared.shared_user_id', '=', $userId) // Filter photos shared with the logged-in user
-        ->select('photos.*')
+        ->where('photo_shared.shared_user_id', '=', $userId)
+        ->select('photos.*', 'photo_shared.symmetric_key', 'photo_shared.symmetric_iv', 'photo_shared.owner_id')
         ->get();
 
     // Verify signatures and decrypt the photos
@@ -106,28 +118,28 @@ $photo->save();
         $path = storage_path('app/public/' . $photo->filename);
         $encryptedContent = file_get_contents($path);
 
-        $user = $photo->album->user;
-        $privateKeyPath = storage_path('app/keys/' . $user->email . '.pem');
+        // Retrieve the owner's public key
+        $owner = User::find($photo->owner_id);
+        $ownerPublicKey = PublicKeyLoader::load($owner->public_key_sign);
+
+        // Decrypt the shared encrypted key and IV
+        $privateKeyPath = storage_path('app/keys/' . Auth::user()->email . '.pem'); // Assuming the logged-in user's private key
         $privateKeyContent = file_get_contents($privateKeyPath);
         $privateKey = PublicKeyLoader::load($privateKeyContent);
 
-        // Decrypt AES key and IV
-        $aesKey = $privateKey->decrypt(base64_decode($photo->encrypted_key));
-        $aesIv = $privateKey->decrypt(base64_decode($photo->encrypted_iv));
+        $aesKey = $privateKey->decrypt(base64_decode($photo->sharedEncrypted_key));
+        $aesIv = $privateKey->decrypt(base64_decode($photo->sharedEncrypted_iv));
 
         // Decrypt the photo content using AES
-
-
-        // Verify the signature
-        $photoContent = file_get_contents($path);
-        $rsa=PublicKeyLoader::load($user->public_key_sign);
-        $isSignatureValid = $rsa->verify($photoContent, base64_decode($photo->signature));
-
-        if ($isSignatureValid) {
-            $aes = new AES('cbc');
+        $aes = new AES('cbc');
         $aes->setKey($aesKey);
         $aes->setIV($aesIv);
-        $decryptedContent = $aes->decrypt($encryptedContent);
+
+        // Verify the signature
+        $isSignatureValid = $ownerPublicKey->verify($encryptedContent, base64_decode($photo->signature));
+
+        if ($isSignatureValid) {
+            $decryptedContent = $aes->decrypt($encryptedContent);
             // Save the decrypted content temporarily
             if (!File::exists(storage_path('app/public/temp'))) {
                 File::makeDirectory(storage_path('app/public/temp'), 0755, true);
@@ -141,6 +153,7 @@ $photo->save();
 
     return view('shared_photos', compact('sharedImages'));
 }
+
 
 
 

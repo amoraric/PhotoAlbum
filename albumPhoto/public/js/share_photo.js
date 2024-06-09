@@ -2,18 +2,13 @@
 
 // Utility functions for base64 encoding/decoding
 function base64ToArrayBuffer(base64) {
-    try {
-        const binaryString = atob(base64);
-        const len = binaryString.length;
-        const bytes = new Uint8Array(len);
-        for (let i = 0; i < len; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-        }
-        return bytes.buffer;
-    } catch (error) {
-        console.error('Error in base64ToArrayBuffer:', error);
-        return null;
+    const binaryString = atob(base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
     }
+    return bytes.buffer;
 }
 
 function arrayBufferToBase64(buffer) {
@@ -28,12 +23,12 @@ function arrayBufferToBase64(buffer) {
 
 // Function to get a user's public key from the server
 async function getUserPublicKey(email) {
-    const response = await fetch(`/users/public-key?email=${email}`);
+    const response = await fetch(`/photo/${email}/getPublicUserKey`);
     if (!response.ok) {
         throw new Error('Failed to fetch public key');
     }
-    const data = await response.json();
-    return data.publicKey;
+    const publicKey = await response.text();
+    return publicKey;
 }
 
 // Function to encrypt the AES key and IV with the recipient's public key
@@ -67,19 +62,18 @@ async function encryptKeyAndIvWithPublicKey(publicKeyPem, aesKeyBuffer, aesIvBuf
 }
 
 // Function to handle sharing the photo
-async function sharePhoto(photoId, recipientEmail) {
+export async function sharePhoto(photoId, recipientEmail) {
     try {
-        // Get the encrypted AES key and IV from the server
         const response = await fetch(`/photos/${photoId}/get-encrypted-keys`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch photo');
+        }
+
         const data = await response.json();
         const { encryptedKey, encryptedIv } = data;
 
-        // Get the recipient's public key
-        const recipientPublicKey = await getUserPublicKey(recipientEmail);
-
-        // Decrypt the AES key and IV with the owner's private key
-        const userEmail = document.querySelector('meta[name="user-email"]').getAttribute('content');
-        const encPrivateKey = localStorage.getItem(`${userEmail}_encPrivateKey`);
+        const ownerEmail = document.querySelector('meta[name="user-email"]').getAttribute('content');
+        const encPrivateKey = localStorage.getItem(`${ownerEmail}_encPrivateKey`);
         const encPrivateKeyBuffer = base64ToArrayBuffer(encPrivateKey);
 
         const privateKey = await crypto.subtle.importKey(
@@ -98,16 +92,15 @@ async function sharePhoto(photoId, recipientEmail) {
             base64ToArrayBuffer(encryptedKey)
         );
 
-        const aesIvBuffer = await crypto.subtle.decrypt(
+        const aesIvDecrypted = await crypto.subtle.decrypt(
             { name: "RSA-OAEP" },
             privateKey,
             base64ToArrayBuffer(encryptedIv)
         );
 
-        // Encrypt the AES key and IV with the recipient's public key
-        const encryptedData = await encryptKeyAndIvWithPublicKey(recipientPublicKey, aesKeyBuffer, aesIvBuffer);
+        const publicKeyPem = await getUserPublicKey(recipientEmail);
+        const encryptedKeys = await encryptKeyAndIvWithPublicKey(publicKeyPem, aesKeyBuffer, aesIvDecrypted);
 
-        // Send the encrypted keys to the server to share the photo
         const shareResponse = await fetch(`/photos/${photoId}/share`, {
             method: 'POST',
             headers: {
@@ -116,8 +109,8 @@ async function sharePhoto(photoId, recipientEmail) {
             },
             body: JSON.stringify({
                 shareWith: recipientEmail,
-                symmetric_key: encryptedData.encryptedKey,
-                symmetric_iv: encryptedData.encryptedIv
+                symmetric_key: encryptedKeys.encryptedKey,
+                symmetric_iv: encryptedKeys.encryptedIv
             })
         });
 
@@ -126,11 +119,13 @@ async function sharePhoto(photoId, recipientEmail) {
         }
 
         alert('Photo shared successfully!');
+
     } catch (error) {
-        console.error('Error sharing photo:', error);
-        alert('Failed to share photo: ' + error.message);
+        console.error('Error decrypting image:', error);
+        alert('Failed to decrypt image: ' + error.message);
     }
 }
+
 
 // Ensure the DOM is loaded before adding event listeners
 document.addEventListener('DOMContentLoaded', function() {
@@ -142,3 +137,13 @@ document.addEventListener('DOMContentLoaded', function() {
         await sharePhoto(photoId, recipientEmail);
     });
 });
+
+function StringToArrayBuffer(pem) {
+    const binaryDerString = atob(pem);
+    const len = binaryDerString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binaryDerString.charCodeAt(i);
+    }
+    return bytes.buffer;
+}

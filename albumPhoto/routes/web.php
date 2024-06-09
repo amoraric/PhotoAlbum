@@ -23,6 +23,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
 
     Route::post('/albums', [AlbumController::class, 'store'])->name('albums.store');
     Route::post('/photos', [PhotoController::class, 'store'])->name('photos.store');
+    Route::get('/photo/{email}/getPublicUserKey', [PhotoController::class, 'getPublicUserKey']);
     Route::get('/photos/{photo}/get-encrypted-keys', [PhotoController::class, 'getEncryptedKeys']);
     Route::post('/photos/{photo}/share', [PhotoController::class, 'share'])->name('photos.share');
     Route::post('/photos/{photo}/unshare', [PhotoController::class, 'unshare'])->name('photos.unshare');
