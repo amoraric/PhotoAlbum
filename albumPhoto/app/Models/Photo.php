@@ -67,4 +67,8 @@ class Photo extends Model
         $this->temp_path = $tempPath;
         $this->save();
     }
+    public function shared()
+    {
+        return $this->hasMany(PhotoShared::class, 'photo_id');
+    }
 }

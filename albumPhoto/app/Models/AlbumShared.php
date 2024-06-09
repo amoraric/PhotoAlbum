@@ -13,6 +13,7 @@ class AlbumShared extends Model
     use HasFactory;
 
     protected $fillable = ['owner_id', 'photo_id', 'shared_user_id'];
+    protected $table = 'album_shared';
 
     public static function addAlbumShared($owner_id, $album_id, $shared_user_id)
     {

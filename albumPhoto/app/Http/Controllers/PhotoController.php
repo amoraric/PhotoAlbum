@@ -88,10 +88,41 @@ class PhotoController extends Controller
         $request->validate([
             'shareWith' => 'required|email'
         ]);
-        $owner = Auth::id();
-        $user = User::where('email', $request->shareWith)->first();
-        if ($user) {
-            PhotoShared::addPhotoShared($owner, $photo->id, $user->id);
+
+        $owner = Auth::user();
+        $recipient = User::where('email', $request->shareWith)->first();
+
+        if ($recipient) {
+            // Load the owner's private key to decrypt the AES key and IV
+            $ownerPrivateKeyPath = storage_path('app/keys/' . $owner->email . '.pem');
+            $ownerPrivateKeyContent = file_get_contents($ownerPrivateKeyPath);
+            $ownerPrivateKey = PublicKeyLoader::loadPrivateKey($ownerPrivateKeyContent);
+            $existingSharedPhoto = PhotoShared::where('photo_id', $photo->id)
+                    ->where('shared_user_id', $recipient->id)
+                    ->exists();
+                    $recipientPublicKey = PublicKeyLoader::load($recipient->public_key_enc);
+            // Decrypt the AES key and IV
+            if (!$existingSharedPhoto) {
+                // Decrypt the AES key and IV for the photo
+                $encryptedKey = base64_decode($photo->encrypted_key);
+                $encryptedIv = base64_decode($photo->encrypted_iv);
+                $aesKey = $ownerPrivateKey->decrypt($encryptedKey);
+                $aesIv = $ownerPrivateKey->decrypt($encryptedIv);
+
+                // Encrypt the AES key and IV with the recipient's public key
+                $newEncryptedKey = $recipientPublicKey->encrypt($aesKey);
+                $newEncryptedIv = $recipientPublicKey->encrypt($aesIv);
+
+                // Store the shared photo metadata
+                $photoShared = new PhotoShared;
+                $photoShared->owner_id = $owner->id;
+                $photoShared->photo_id = $photo->id;
+                $photoShared->shared_user_id = $recipient->id;
+                $photoShared->sharedEncrypted_key = base64_encode($newEncryptedKey);
+                $photoShared->sharedEncrypted_iv = base64_encode($newEncryptedIv);
+                $photoShared->save();
+            }
+
             return redirect()->route('gallery')->with('success', 'Photo shared successfully!');
         } else {
             return redirect()->route('gallery')->with('error', 'User not found.');
@@ -101,9 +132,11 @@ class PhotoController extends Controller
     public function sharedPhotos()
 {
     $userId = Auth::id();
+
+    // Join the photos and photo_shared tables to get the necessary fields
     $sharedImages = Photo::join('photo_shared', 'photos.id', '=', 'photo_shared.photo_id')
-        ->where('photo_shared.shared_user_id', '=', $userId) // Filter photos shared with the logged-in user
-        ->select('photos.*')
+        ->where('photo_shared.shared_user_id', '=', $userId)
+        ->select('photos.*', 'photo_shared.sharedEncrypted_key', 'photo_shared.sharedEncrypted_iv', 'photo_shared.owner_id')
         ->get();
 
     // Verify signatures and decrypt the photos
@@ -111,28 +144,28 @@ class PhotoController extends Controller
         $path = storage_path('app/public/' . $photo->filename);
         $encryptedContent = file_get_contents($path);
 
-        $user = $photo->album->user;
-        $privateKeyPath = storage_path('app/keys/' . $user->email . '.pem');
+        // Retrieve the owner's public key
+        $owner = User::find($photo->owner_id);
+        $ownerPublicKey = PublicKeyLoader::load($owner->public_key_sign);
+
+        // Decrypt the shared encrypted key and IV
+        $privateKeyPath = storage_path('app/keys/' . Auth::user()->email . '.pem'); // Assuming the logged-in user's private key
         $privateKeyContent = file_get_contents($privateKeyPath);
         $privateKey = PublicKeyLoader::load($privateKeyContent);
 
-        // Decrypt AES key and IV
-        $aesKey = $privateKey->decrypt(base64_decode($photo->encrypted_key));
-        $aesIv = $privateKey->decrypt(base64_decode($photo->encrypted_iv));
+        $aesKey = $privateKey->decrypt(base64_decode($photo->sharedEncrypted_key));
+        $aesIv = $privateKey->decrypt(base64_decode($photo->sharedEncrypted_iv));
 
         // Decrypt the photo content using AES
-
-
-        // Verify the signature
-        $photoContent = file_get_contents($path);
-        $rsa=PublicKeyLoader::load($user->public_key_sign);
-        $isSignatureValid = $rsa->verify($photoContent, base64_decode($photo->signature));
-
-        if ($isSignatureValid) {
-            $aes = new AES('cbc');
+        $aes = new AES('cbc');
         $aes->setKey($aesKey);
         $aes->setIV($aesIv);
-        $decryptedContent = $aes->decrypt($encryptedContent);
+
+        // Verify the signature
+        $isSignatureValid = $ownerPublicKey->verify($encryptedContent, base64_decode($photo->signature));
+
+        if ($isSignatureValid) {
+            $decryptedContent = $aes->decrypt($encryptedContent);
             // Save the decrypted content temporarily
             if (!File::exists(storage_path('app/public/temp'))) {
                 File::makeDirectory(storage_path('app/public/temp'), 0755, true);

@@ -4,11 +4,13 @@
 <div class="container">
     <h2>Shared Photos</h2>
     <div class="row">
-    @foreach($sharedImages as $photo)
-    <div class="col-md-4">
-        <img src="{{ asset('storage/' . $photo->temp_path) }}" alt="{{ $photo->photo_name }}" class="img-thumbnail" data-bs-toggle="modal" data-bs-target="#imageModal" onclick="showImage('{{ asset('storage/' . $photo->temp_path) }}')">
-        <button class="btn btn-secondary mt-2" type="button" onclick="showShareList({{ $photo->id }}, 'photo')">Shared With</button>
-    </div>
+        @foreach($sharedImages as $photo)
+        @if(!$photo->sharedFromAlbum)
+            <div class="col-md-4">
+                <img src="{{ asset('storage/' . $photo->temp_path) }}" alt="{{ $photo->photo_name }}" class="img-thumbnail" data-bs-toggle="modal" data-bs-target="#imageModal" onclick="showImage('{{ asset('storage/' . $photo->temp_path) }}')">
+                <button class="btn btn-secondary mt-2" type="button" onclick="showShareList({{ $photo->id }}, 'photo')">Shared With</button>
+            </div>
+        @endif
     @endforeach
     </div>
 </div>

@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('photo_shared', function (Blueprint $table) {
-            $table->renameColumn('public_key', 'public_key_enc');
-            $table->text('public_key_sign')->nullable();
+            $table->text('sharedEncrypted_key')->nullable();
+            $table->text('sharedEncrypted_iv')->nullable();
         });
     }
 
@@ -22,9 +22,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->renameColumn('public_key_enc', 'public_key');
-            $table->dropColumn('public_key_sign');
+        Schema::table('photo_shared', function (Blueprint $table) {
+            $table->dropColumn('sharedEncrypted_key');
+            $table->dropColumn('sharedEncrypted_iv');
         });
     }
 };

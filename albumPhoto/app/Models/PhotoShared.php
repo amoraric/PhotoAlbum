@@ -12,6 +12,7 @@ class PhotoShared extends Model
 {
     use HasFactory;
 
+    protected $table = 'photo_shared';
     protected $fillable = ['owner_id', 'photo_id', 'shared_user_id'];
 
     public static function addPhotoShared($owner_id, $photo_id, $shared_user_id)
@@ -29,5 +30,10 @@ class PhotoShared extends Model
     {
         return $this->belongsTo(User::class, 'shared_user_id');
     }
+    public function photo()
+    {
+        return $this->belongsTo(Photo::class, 'photo_id');
+    }
+
 
 }
