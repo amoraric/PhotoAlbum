@@ -4,9 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class PhotoShared extends Model
 {
@@ -31,5 +29,4 @@ class PhotoShared extends Model
     {
         return $this->belongsTo(User::class, 'shared_user_id');
     }
-
 }

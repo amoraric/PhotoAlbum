@@ -51,7 +51,19 @@ $photo->signature = $request->signature;
 $photo->save();
 }
 
+    public function getEncryptedKeys(Photo $photo)
+    {
+        $owner = Auth::user();
 
+        if ($photo->owner_id !== $owner->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        return response()->json([
+            'encryptedKey' => $photo->encrypted_key,
+            'encryptedIv' => $photo->encrypted_iv
+        ]);
+    }
 
 
     public function share(Request $request, Photo $photo)
@@ -59,15 +71,27 @@ $photo->save();
         $request->validate([
             'shareWith' => 'required|email'
         ]);
-        $owner = Auth::id();
+
+        $owner = Auth::user();
         $user = User::where('email', $request->shareWith)->first();
+        $symmetricKey = $request->input('symmetric_key');
+        $symmetricIv = $request->input('symmetric_iv');
+
         if ($user) {
-            PhotoShared::addPhotoShared($owner, $photo->id, $user->id);
-            return redirect()->route('gallery')->with('success', 'Photo shared successfully!');
+            PhotoShared::addPhotoShared(
+                $owner->id,
+                $photo->id,
+                $user->id,
+                $symmetricKey,
+                $symmetricIv
+            );
+
+            return response()->json(['message' => 'Photo shared successfully!'], 200);
         } else {
-            return redirect()->route('gallery')->with('error', 'User not found.');
+            return response()->json(['message' => 'User not found.'], 404);
         }
     }
+
 
     public function sharedPhotos()
 {
@@ -147,16 +171,15 @@ $photo->save();
         $photo = Photo::findOrFail($id);
 
         $encryptedContent = file_get_contents(storage_path('app/public/' . $photo->filename));
-        // Assuming encrypted_key, encrypted_iv, and signature are stored directly in the database and are already base64 encoded
-        $encryptedKey = base64_decode($photo->encrypted_key);
-        $encryptedIv = base64_decode($photo->encrypted_iv);
-        $signature = base64_decode($photo->signature);
+        $encryptedKey = $photo->encrypted_key;
+        $encryptedIv = $photo->encrypted_iv;
+        $signature = $photo->signature;
 
         return response()->json([
             'encryptedContent' => base64_encode($encryptedContent),
-            'encryptedSymmetricKey' => base64_encode($encryptedKey),
-            'encryptedIv' => base64_encode($encryptedIv),
-            'signature' => base64_encode($signature),
+            'encryptedKey' => $encryptedKey,
+            'encryptedIv' => $encryptedIv,
+            'signature' => $signature
         ]);
     }
 }

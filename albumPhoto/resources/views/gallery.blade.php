@@ -46,7 +46,7 @@
                 @foreach($album->photos as $photo)
                 <div class="col-md-4 position-relative">
                     <img id="photo-{{ $photo->id }}" src="#" alt="{{ $photo->photo_name }}" class="img-thumbnail" data-photo-id="{{ $photo->id }}">
-                    <button class="btn btn-secondary position-absolute bottom-0 start-0 m-1" type="button" data-bs-toggle="modal" data-bs-target="#shareModalPhotos" onclick="setPhotoId({{ $photo->id }})">Share Photo</button>
+                    <button class="btn btn-secondary position-absolute bottom-0 start-0 m-1" type="button" data-bs-toggle="modal" data-bs-target="#shareModalPhotos" @click="setPhotoId({{ $photo->id }})">Share Photo</button>
                 </div>
                 @endforeach
             </div>
