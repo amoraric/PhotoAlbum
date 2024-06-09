@@ -68,7 +68,6 @@ class User extends Authenticatable
       public static function generateKeyPair()
       {
           // Get the OpenSSL configuration path from the environment variable
-          $opensslConf = getenv('OPENSSL_CONF');
           if ($opensslConf === false) {
               throw new \Exception('OPENSSL_CONF environment variable is not set');
           }
@@ -78,7 +77,6 @@ class User extends Authenticatable
               "digest_alg" => "sha256",
               "private_key_bits" => 2048,
               "private_key_type" => OPENSSL_KEYTYPE_RSA,
-              "config" => $opensslConf
           );
 
           // Generate a new private (and public) key pair

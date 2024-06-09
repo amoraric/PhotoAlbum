@@ -213,12 +213,7 @@ class AlbumController extends Controller
                     $photoShared->shared_user_id = $recipient->id;
                     $photoShared->sharedEncrypted_key = base64_encode($newEncryptedKey);
                     $photoShared->sharedEncrypted_iv = base64_encode($newEncryptedIv);
-                    $photoShared->sharedFromAlbum = true;
                     $photoShared->save();
-                }
-                else{
-                    $existingSharedPhoto->sharedFromAlbum = 1;
-                        $existingSharedPhoto->save();
                 }
             }
 

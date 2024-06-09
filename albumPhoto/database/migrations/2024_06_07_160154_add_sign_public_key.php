@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('photo_shared', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table) {
             $table->renameColumn('public_key', 'public_key_enc');
             $table->text('public_key_sign')->nullable();
         });

@@ -102,7 +102,7 @@ class PhotoController extends Controller
                     ->exists();
                     $recipientPublicKey = PublicKeyLoader::load($recipient->public_key_enc);
             // Decrypt the AES key and IV
-            if (!$existingSharedPhoto) {
+
                 // Decrypt the AES key and IV for the photo
                 $encryptedKey = base64_decode($photo->encrypted_key);
                 $encryptedIv = base64_decode($photo->encrypted_iv);
@@ -112,7 +112,7 @@ class PhotoController extends Controller
                 // Encrypt the AES key and IV with the recipient's public key
                 $newEncryptedKey = $recipientPublicKey->encrypt($aesKey);
                 $newEncryptedIv = $recipientPublicKey->encrypt($aesIv);
-
+                if (!$existingSharedPhoto) {
                 // Store the shared photo metadata
                 $photoShared = new PhotoShared;
                 $photoShared->owner_id = $owner->id;
@@ -121,7 +121,8 @@ class PhotoController extends Controller
                 $photoShared->sharedEncrypted_key = base64_encode($newEncryptedKey);
                 $photoShared->sharedEncrypted_iv = base64_encode($newEncryptedIv);
                 $photoShared->save();
-            }
+                }
+
 
             return redirect()->route('gallery')->with('success', 'Photo shared successfully!');
         } else {
