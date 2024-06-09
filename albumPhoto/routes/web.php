@@ -58,3 +58,5 @@ Route::post('2fa/setup/verify', [RegisterController::class, 'verify2FA'])->name(
 
 // New routes for storing keys
 Route::post('keys/store', [KeyController::class, 'storeKeys'])->name('keys.store');
+
+Route::get('/photos/decrypt/{id}', [PhotoController::class, 'decrypt'])->name('photos.decrypt');

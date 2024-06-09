@@ -141,4 +141,21 @@ $photo->save();
         $sharedUsers = $photo->sharedUsers()->get(['email']);
         return response()->json($sharedUsers);
     }
+
+    public function decrypt($id)
+    {
+        $photo = Photo::findOrFail($id);
+
+        $encryptedContent = file_get_contents(storage_path('app/public/' . $photo->filename));
+        $encryptedKey = $photo->encrypted_key;
+        $encryptedIv = $photo->encrypted_iv;
+        $signature = $photo->signature;
+
+        return response()->json([
+            'encryptedContent' => base64_encode($encryptedContent),
+            'encryptedKey' => $encryptedKey,
+            'encryptedIv' => $encryptedIv,
+            'signature' => $signature
+        ]);
+    }
 }
