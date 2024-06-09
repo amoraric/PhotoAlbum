@@ -48,7 +48,9 @@ The system is based on a client/server architecture, involving two primary compo
     cd secg4-security-project/albumPhoto
     ```
 
-2. Run the following commands:
+2. Create a file .env and insert the content of the .env.example file
+
+3. Run the following commands:
     ```bash
     composer install
     php artisan serve
@@ -59,7 +61,7 @@ The system is based on a client/server architecture, involving two primary compo
     php artisan storage:link
     ```
 
-3. If you have a problem, run these commands:
+4. If you have a problem, run these commands:
     ```bash
     php artisan cache:clear
     php artisan route:clear
